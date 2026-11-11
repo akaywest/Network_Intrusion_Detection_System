@@ -1,0 +1,45 @@
+{
+  "model": "IsolationForest",
+  "hyperparameters": {
+    "n_estimators": 100,
+    "max_samples": 1024,
+    "max_features": 1.0
+  },
+  "search": {
+    "method": "grid",
+    "space": {
+      "n_estimators": [
+        100,
+        200,
+        300,
+        500
+      ],
+      "max_samples": [
+        256,
+        512,
+        1024
+      ],
+      "max_features": [
+        0.5,
+        0.75,
+        1.0
+      ]
+    },
+    "n_fits": 36,
+    "seed": 42,
+    "selection": "max validation best-threshold F1, tie-break ROC-AUC"
+  },
+  "score": "s = -score_samples(x) (higher = more anomalous; plan \u00a71.1 item 4)",
+  "decision_rule": "Malicious iff s >= tau; tau = validation F1-maximising threshold, set per seed",
+  "training_data": "Normal rows of the training partition only",
+  "n_train_normal": 17535,
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "sklearn_version": "1.9.1",
+  "smoke": false
+}
