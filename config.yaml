@@ -9,7 +9,8 @@ network: {host: 127.0.0.1, data_port: 9100, engine_ctl_port: 9101, streamer_ctl_
 # Stratified 70/15/15 split on the seven-class label, done before any fitting (§3.2.4).
 split: {train: 0.70, val: 0.15, test: 0.15, seed: 42, stratify: label_7}
 
-prep: {corr_threshold: 0.98, skew_threshold: 1.0, missing_drop_below: 0.01}
+prep: {corr_threshold: 0.98, skew_threshold: 1.0, missing_drop_below: 0.01,
+       log_exclude: [Protocol]}   # categorical codes: standardised only, never log1p
 
 # Final training/evaluation repeated over five seeds (§3.3.10, NFR3).
 seeds: [42, 43, 44, 45, 46]
