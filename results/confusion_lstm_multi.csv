@@ -1,0 +1,8 @@
+true,Normal,Botnet,Brute Force,DoS/DDoS,Infiltration,PortScan,Web Attack
+Normal,14679,637,161,1603,457,441,812
+Botnet,6,1016,0,0,0,8,0
+Brute Force,40,1,4934,14,3,34,144
+DoS/DDoS,621,47,19,15012,130,172,24
+Infiltration,5,1,0,3,11,0,0
+PortScan,4,1,0,22,0,385,3
+Web Attack,16,0,0,6,2,2,1494
