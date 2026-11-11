@@ -1,0 +1,21 @@
+# Every tunable setting for the NIDS (implementation plan §2.3; NFR4 reproducibility).
+paths: {raw: data/raw, processed: data/processed, artefacts: artefacts, db: db/nids.db}
+
+# All sockets bind loopback only (NFR6).
+network: {host: 127.0.0.1, data_port: 9100, engine_ctl_port: 9101, streamer_ctl_port: 9102}
+
+# Stratified 70/15/15 split on the seven-class label, done before any fitting (§3.2.4).
+split: {train: 0.70, val: 0.15, test: 0.15, seed: 42, stratify: label_7}
+
+prep: {corr_threshold: 0.98, skew_threshold: 1.0, missing_drop_below: 0.01}
+
+# Final training/evaluation repeated over five seeds (§3.3.10, NFR3).
+seeds: [42, 43, 44, 45, 46]
+
+# Scenario sample sizes and warm-up exclusion (Table 3.13).
+stream: {steady_n: 5000, burst_n: 2000, burst_block: 1000, warmup_latency: 100, sample_seed: 42}
+
+dashboard: {refresh_s: 1}
+
+# Alert severity: High when confidence >= high_confidence, else Medium (FR10, §3.3.9).
+alerts: {high_confidence: 0.90}

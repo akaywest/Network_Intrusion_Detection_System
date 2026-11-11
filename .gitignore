@@ -1,0 +1,26 @@
+# Environment
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.claude/settings.local.json
+
+# Data (IDS2025 CSVs and processed partitions) — never committed
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# SQLite log (incl. WAL/SHM files)
+db/*
+!db/.gitkeep
+
+# Large model files; small JSON artefacts (feature_list, preprocessor, label_map, configs) stay tracked
+artefacts/*.joblib
+artefacts/*.keras
+artefacts/*.h5
+artefacts/*.npz
+
+# Bulky per-row result files (regenerable); summary CSVs and plots stay tracked
+results/offline/
