@@ -1,0 +1,217 @@
+{
+  "model": "LSTM",
+  "task": "multi",
+  "formulation": "B",
+  "formulation_desc": "each flow's F scaled features as a sequence of F steps",
+  "input_shape": [
+    49,
+    1
+  ],
+  "warmup_records": 0,
+  "features": 49,
+  "tau": null,
+  "threshold_rule": "argmax",
+  "config": {
+    "layers": 2,
+    "units": 64,
+    "dropout": 0.2682,
+    "learning_rate": 0.001286,
+    "batch_size": 512
+  },
+  "seed": 42,
+  "classes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "class_names": [
+    "Normal",
+    "Botnet",
+    "Brute Force",
+    "DoS/DDoS",
+    "Infiltration",
+    "PortScan",
+    "Web Attack"
+  ],
+  "output": "class probabilities, softmax",
+  "threshold_choice": {
+    "rule": "argmax"
+  },
+  "validation": {
+    "seed": 42,
+    "tau": null,
+    "epochs_run": 27,
+    "best_epoch": 22,
+    "fit_s": 739.75,
+    "mean_epoch_s": 27.394,
+    "epoch_s": [
+      23.146,
+      20.543,
+      19.665,
+      19.574,
+      30.497,
+      26.18,
+      24.702,
+      21.452,
+      21.758,
+      21.939,
+      21.991,
+      39.245,
+      23.905,
+      21.698,
+      25.279,
+      28.51,
+      30.521,
+      31.21,
+      31.342,
+      34.678,
+      27.743,
+      31.272,
+      27.358,
+      27.539,
+      40.42,
+      36.637,
+      30.829
+    ],
+    "macro_f1": 0.6833599262400796,
+    "accuracy": 0.86046782264634,
+    "per_class_recall": {
+      "Normal": 0.7492680330050572,
+      "Botnet": 0.9805825242718447,
+      "Brute Force": 0.9535333978702807,
+      "DoS/DDoS": 0.9397627965043696,
+      "Infiltration": 0.6,
+      "PortScan": 0.9759036144578314,
+      "Web Attack": 0.9737704918032787
+    },
+    "binary_collapsed": {
+      "f1": 0.896169643710001,
+      "roc_auc": 0.9622093074455117
+    },
+    "confusion_matrix": [
+      [
+        2815,
+        106,
+        62,
+        324,
+        170,
+        119,
+        161
+      ],
+      [
+        1,
+        202,
+        0,
+        0,
+        0,
+        3,
+        0
+      ],
+      [
+        9,
+        0,
+        985,
+        1,
+        0,
+        3,
+        35
+      ],
+      [
+        128,
+        2,
+        0,
+        3011,
+        43,
+        18,
+        2
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        81,
+        1
+      ],
+      [
+        6,
+        0,
+        0,
+        1,
+        1,
+        0,
+        297
+      ]
+    ]
+  },
+  "single_record_timing": {
+    "n_calls": 1000,
+    "method": "tf.function, input_signature (1, F, 1)",
+    "intra_op_threads": 1,
+    "inter_op_threads": 1,
+    "source": "validation rows",
+    "mean_ms": 4.826610714,
+    "median_ms": 4.402149,
+    "p95_ms": 6.93999165,
+    "p99_ms": 10.048589059999994,
+    "max_ms": 15.925966,
+    "implied_max_records_per_s": 207.18472221084951,
+    "max_abs_diff_vs_predict": 1.1920928955078125e-06
+  },
+  "run_fingerprint": {
+    "task": "multi",
+    "formulation": "B",
+    "smoke": false,
+    "search_frac": 0.3,
+    "n_search_rows": 12030,
+    "n_train": 40102,
+    "n_val": 8593,
+    "n_features": 49,
+    "n_trials": 15,
+    "max_epochs": 50,
+    "patience": 5,
+    "search_seed": 42,
+    "space": {
+      "layers": [
+        1,
+        2
+      ],
+      "units": [
+        32,
+        64,
+        128
+      ],
+      "dropout": {
+        "uniform": [
+          0.2,
+          0.5
+        ]
+      },
+      "learning_rate": {
+        "log_uniform": [
+          0.0001,
+          0.01
+        ]
+      },
+      "batch_size": [
+        128,
+        256,
+        512
+      ]
+    }
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "model": "LSTM",
+  "task": "binary",
+  "formulation": "B",
+  "formulation_desc": "each flow's F scaled features as a sequence of F steps",
+  "input_shape": [
+    49,
+    1
+  ],
+  "warmup_records": 0,
+  "features": 49,
+  "tau": 0.5,
+  "threshold_rule": "0.5",
+  "config": {
+    "layers": 2,
+    "units": 128,
+    "dropout": 0.2865,
+    "learning_rate": 0.002317,
+    "batch_size": 256
+  },
+  "seed": 46,
+  "classes": [
+    0,
+    1
+  ],
+  "class_names": [
+    "Normal",
+    "Malicious"
+  ],
+  "output": "P(Malicious), sigmoid",
+  "threshold_choice": {
+    "rule": "0.5",
+    "val_f1_at_0.5": 0.9651114781172585,
+    "tuned_tau": 0.34907296299934387,
+    "val_f1_at_tuned": 0.9675504145767223,
+    "f1_gain": 0.002438936459463803,
+    "min_gain": 0.005
+  },
+  "validation": {
+    "seed": 46,
+    "tau": 0.5,
+    "epochs_run": 32,
+    "best_epoch": 27,
+    "fit_s": 1800.85,
+    "mean_epoch_s": 56.273,
+    "epoch_s": [
+      57.315,
+      54.012,
+      55.179,
+      54.3,
+      53.863,
+      54.115,
+      53.922,
+      82.345,
+      54.167,
+      54.156,
+      54.544,
+      54.555,
+      54.209,
+      54.088,
+      54.449,
+      84.389,
+      54.594,
+      54.155,
+      54.193,
+      54.613,
+      54.208,
+      54.212,
+      55.259,
+      54.753,
+      54.196,
+      54.091,
+      54.309,
+      54.266,
+      54.199,
+      54.173,
+      54.175,
+      55.734
+    ],
+    "precision": 0.9585460486011844,
+    "recall": 0.9706368899917287,
+    "f1": 0.9645535806020754,
+    "roc_auc": 0.9939545712629504,
+    "fpr": 0.05403247271759382,
+    "tp": 4694,
+    "fp": 203,
+    "fn": 142,
+    "tn": 3554
+  },
+  "single_record_timing": null,
+  "run_fingerprint": {
+    "task": "binary",
+    "formulation": "B",
+    "smoke": false,
+    "search_frac": 0.3,
+    "n_search_rows": 12030,
+    "n_train": 40102,
+    "n_val": 8593,
+    "n_features": 49,
+    "n_trials": 15,
+    "max_epochs": 50,
+    "patience": 5,
+    "search_seed": 42,
+    "space": {
+      "layers": [
+        1,
+        2
+      ],
+      "units": [
+        32,
+        64,
+        128
+      ],
+      "dropout": {
+        "uniform": [
+          0.2,
+          0.5
+        ]
+      },
+      "learning_rate": {
+        "log_uniform": [
+          0.0001,
+          0.01
+        ]
+      },
+      "batch_size": [
+        128,
+        256,
+        512
+      ]
+    }
+  }
+}

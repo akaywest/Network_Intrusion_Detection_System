@@ -1,0 +1,121 @@
+{
+  "model": "LSTM",
+  "task": "binary",
+  "formulation": "B",
+  "formulation_desc": "each flow's F scaled features as a sequence of F steps",
+  "input_shape": [
+    49,
+    1
+  ],
+  "warmup_records": 0,
+  "features": 49,
+  "tau": 0.5,
+  "threshold_rule": "0.5",
+  "config": {
+    "layers": 2,
+    "units": 128,
+    "dropout": 0.2865,
+    "learning_rate": 0.002317,
+    "batch_size": 256
+  },
+  "seed": 45,
+  "classes": [
+    0,
+    1
+  ],
+  "class_names": [
+    "Normal",
+    "Malicious"
+  ],
+  "output": "P(Malicious), sigmoid",
+  "threshold_choice": {
+    "rule": "0.5",
+    "val_f1_at_0.5": 0.9651114781172585,
+    "tuned_tau": 0.34907296299934387,
+    "val_f1_at_tuned": 0.9675504145767223,
+    "f1_gain": 0.002438936459463803,
+    "min_gain": 0.005
+  },
+  "validation": {
+    "seed": 45,
+    "tau": 0.5,
+    "epochs_run": 20,
+    "best_epoch": 15,
+    "fit_s": 1175.75,
+    "mean_epoch_s": 58.778,
+    "epoch_s": [
+      58.952,
+      59.102,
+      53.954,
+      55.306,
+      80.428,
+      54.369,
+      53.813,
+      54.138,
+      54.924,
+      54.404,
+      53.73,
+      54.19,
+      53.813,
+      54.174,
+      81.413,
+      54.128,
+      54.151,
+      82.204,
+      54.129,
+      54.229
+    ],
+    "precision": 0.9586536463744026,
+    "recall": 0.9540942928039702,
+    "f1": 0.956368535599544,
+    "roc_auc": 0.9924694746811742,
+    "fpr": 0.052967793452222516,
+    "tp": 4614,
+    "fp": 199,
+    "fn": 222,
+    "tn": 3558
+  },
+  "single_record_timing": null,
+  "run_fingerprint": {
+    "task": "binary",
+    "formulation": "B",
+    "smoke": false,
+    "search_frac": 0.3,
+    "n_search_rows": 12030,
+    "n_train": 40102,
+    "n_val": 8593,
+    "n_features": 49,
+    "n_trials": 15,
+    "max_epochs": 50,
+    "patience": 5,
+    "search_seed": 42,
+    "space": {
+      "layers": [
+        1,
+        2
+      ],
+      "units": [
+        32,
+        64,
+        128
+      ],
+      "dropout": {
+        "uniform": [
+          0.2,
+          0.5
+        ]
+      },
+      "learning_rate": {
+        "log_uniform": [
+          0.0001,
+          0.01
+        ]
+      },
+      "batch_size": [
+        128,
+        256,
+        512
+      ]
+    }
+  }
+}

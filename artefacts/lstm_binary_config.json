@@ -1,0 +1,94 @@
+{
+  "model": "LSTM",
+  "task": "binary",
+  "formulation": "B",
+  "input_shape": [
+    49,
+    1
+  ],
+  "hyperparameters": {
+    "layers": 2,
+    "units": 128,
+    "dropout": 0.2865,
+    "learning_rate": 0.002317,
+    "batch_size": 256
+  },
+  "architecture": "LSTM x layers -> Dropout -> Dense (1, sigmoid)",
+  "training": {
+    "optimizer": "Adam",
+    "loss": "binary_crossentropy",
+    "class_weight": "balanced (training labels)",
+    "early_stopping": {
+      "monitor": "val_loss",
+      "patience": 5,
+      "restore_best_weights": true
+    },
+    "max_epochs": 50,
+    "op_determinism": true
+  },
+  "search": {
+    "method": "random search",
+    "n_trials": 15,
+    "seed": 42,
+    "space": {
+      "layers": [
+        1,
+        2
+      ],
+      "units": [
+        32,
+        64,
+        128
+      ],
+      "dropout": {
+        "uniform": [
+          0.2,
+          0.5
+        ]
+      },
+      "learning_rate": {
+        "log_uniform": [
+          0.0001,
+          0.01
+        ]
+      },
+      "batch_size": [
+        128,
+        256,
+        512
+      ]
+    },
+    "selection": "validation f1 at 0.5",
+    "search_frac": 0.3,
+    "n_rows": 12030,
+    "best_val_score": 0.9604670217124129
+  },
+  "decision_rule": "Malicious iff P(Malicious) >= tau",
+  "threshold_choice": {
+    "rule": "0.5",
+    "val_f1_at_0.5": 0.9651114781172585,
+    "tuned_tau": 0.34907296299934387,
+    "val_f1_at_tuned": 0.9675504145767223,
+    "f1_gain": 0.002438936459463803,
+    "min_gain": 0.005
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "class_names": [
+    "Normal",
+    "Botnet",
+    "Brute Force",
+    "DoS/DDoS",
+    "Infiltration",
+    "PortScan",
+    "Web Attack"
+  ],
+  "tensorflow_version": "2.21.0",
+  "keras_version": "3.15.1",
+  "smoke": false
+}

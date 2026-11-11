@@ -1,0 +1,157 @@
+{
+  "model": "LSTM",
+  "task": "binary",
+  "formulation": "B",
+  "formulation_desc": "each flow's F scaled features as a sequence of F steps",
+  "input_shape": [
+    49,
+    1
+  ],
+  "warmup_records": 0,
+  "features": 49,
+  "tau": 0.5,
+  "threshold_rule": "0.5",
+  "config": {
+    "layers": 2,
+    "units": 128,
+    "dropout": 0.2865,
+    "learning_rate": 0.002317,
+    "batch_size": 256
+  },
+  "seed": 42,
+  "classes": [
+    0,
+    1
+  ],
+  "class_names": [
+    "Normal",
+    "Malicious"
+  ],
+  "output": "P(Malicious), sigmoid",
+  "threshold_choice": {
+    "rule": "0.5",
+    "val_f1_at_0.5": 0.9651114781172585,
+    "tuned_tau": 0.34907296299934387,
+    "val_f1_at_tuned": 0.9675504145767223,
+    "f1_gain": 0.002438936459463803,
+    "min_gain": 0.005
+  },
+  "validation": {
+    "seed": 42,
+    "tau": 0.5,
+    "epochs_run": 43,
+    "best_epoch": 38,
+    "fit_s": 2496.9,
+    "mean_epoch_s": 58.065,
+    "epoch_s": [
+      56.092,
+      52.71,
+      81.15,
+      52.674,
+      81.116,
+      53.006,
+      53.058,
+      52.507,
+      82.723,
+      52.234,
+      55.83,
+      52.032,
+      52.349,
+      80.575,
+      52.553,
+      53.489,
+      52.1,
+      52.228,
+      52.297,
+      52.225,
+      52.211,
+      53.467,
+      53.055,
+      79.639,
+      52.453,
+      52.782,
+      80.092,
+      52.264,
+      52.382,
+      53.618,
+      52.324,
+      53.04,
+      52.64,
+      81.746,
+      53.578,
+      52.507,
+      52.701,
+      52.582,
+      52.547,
+      52.387,
+      52.394,
+      52.431,
+      80.998
+    ],
+    "precision": 0.963520197856554,
+    "recall": 0.9667080231596361,
+    "f1": 0.9651114781172585,
+    "roc_auc": 0.9947067101432715,
+    "fpr": 0.04711205749268033,
+    "tp": 4675,
+    "fp": 177,
+    "fn": 161,
+    "tn": 3580
+  },
+  "single_record_timing": {
+    "n_calls": 1000,
+    "method": "tf.function, input_signature (1, F, 1)",
+    "intra_op_threads": 1,
+    "inter_op_threads": 1,
+    "source": "validation rows",
+    "mean_ms": 5.299527763,
+    "median_ms": 5.1613690000000005,
+    "p95_ms": 6.13046815,
+    "p99_ms": 7.240142999999999,
+    "max_ms": 9.734053,
+    "implied_max_records_per_s": 188.69605835103914,
+    "max_abs_diff_vs_predict": 4.917383193969727e-07
+  },
+  "run_fingerprint": {
+    "task": "binary",
+    "formulation": "B",
+    "smoke": false,
+    "search_frac": 0.3,
+    "n_search_rows": 12030,
+    "n_train": 40102,
+    "n_val": 8593,
+    "n_features": 49,
+    "n_trials": 15,
+    "max_epochs": 50,
+    "patience": 5,
+    "search_seed": 42,
+    "space": {
+      "layers": [
+        1,
+        2
+      ],
+      "units": [
+        32,
+        64,
+        128
+      ],
+      "dropout": {
+        "uniform": [
+          0.2,
+          0.5
+        ]
+      },
+      "learning_rate": {
+        "log_uniform": [
+          0.0001,
+          0.01
+        ]
+      },
+      "batch_size": [
+        128,
+        256,
+        512
+      ]
+    }
+  }
+}

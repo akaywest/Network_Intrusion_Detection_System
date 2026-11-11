@@ -1,0 +1,89 @@
+{
+  "model": "LSTM",
+  "task": "multi",
+  "formulation": "B",
+  "input_shape": [
+    49,
+    1
+  ],
+  "hyperparameters": {
+    "layers": 2,
+    "units": 64,
+    "dropout": 0.2682,
+    "learning_rate": 0.001286,
+    "batch_size": 512
+  },
+  "architecture": "LSTM x layers -> Dropout -> Dense (7, softmax)",
+  "training": {
+    "optimizer": "Adam",
+    "loss": "sparse_categorical_crossentropy",
+    "class_weight": "balanced (training labels)",
+    "early_stopping": {
+      "monitor": "val_loss",
+      "patience": 5,
+      "restore_best_weights": true
+    },
+    "max_epochs": 50,
+    "op_determinism": true
+  },
+  "search": {
+    "method": "random search",
+    "n_trials": 15,
+    "seed": 42,
+    "space": {
+      "layers": [
+        1,
+        2
+      ],
+      "units": [
+        32,
+        64,
+        128
+      ],
+      "dropout": {
+        "uniform": [
+          0.2,
+          0.5
+        ]
+      },
+      "learning_rate": {
+        "log_uniform": [
+          0.0001,
+          0.01
+        ]
+      },
+      "batch_size": [
+        128,
+        256,
+        512
+      ]
+    },
+    "selection": "validation macro_f1",
+    "search_frac": 0.3,
+    "n_rows": 12030,
+    "best_val_score": 0.7188163458578655
+  },
+  "decision_rule": "argmax of class probabilities",
+  "threshold_choice": {
+    "rule": "argmax"
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "class_names": [
+    "Normal",
+    "Botnet",
+    "Brute Force",
+    "DoS/DDoS",
+    "Infiltration",
+    "PortScan",
+    "Web Attack"
+  ],
+  "tensorflow_version": "2.21.0",
+  "keras_version": "3.15.1",
+  "smoke": false
+}
