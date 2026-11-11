@@ -98,6 +98,8 @@ This layout gives each of the eight modules in Table 3.9 its own folder, so Chap
 >
 > src/nids/
 >
+> prep/convert_xlsx.py \# M1 one-off: IDS2025.xlsx -\> data/processed/ids2025_raw.parquet
+>
 > prep/prepare_data.py \# M1 Data preparation
 >
 > train/train_iforest.py \# M2 Model training
@@ -166,11 +168,11 @@ Goal: turn the IDS2025 daily files into leakage-free partitions and a saved prep
 
 ## 3.1 Steps, in this order
 
-1.  **Load and merge** the Monday–Friday CSVs in day order. Add row_index, the global position after the merge (Monday first, file row order kept), and source_day. Strip whitespace from column names, because CICFlowMeter exports often have leading spaces. Record the row count of each file for Chapter Four.
+1.  **Load** data/processed/ids2025_raw.parquet. *Revised (deviation from §3.2.4, Fig. 3.3, FR1):* the dataset as obtained is **one Excel workbook**, data/raw/IDS2025.xlsx, with a single sheet (sample_91830_without_text_field, 91,830 rows × 80 columns), not Monday–Friday daily CSVs. It contains **no day, Timestamp, Flow ID or IP column**, so there is no merge and **no source_day**. The one-off script src/nids/prep/convert_xlsx.py reads the workbook once (read-only; SHA-256 checked before and after), strips whitespace from column names, adds row_index (0…91,829, original sheet order) and writes the Parquet file with **no values changed and no cleaning**. Columns containing text cells (Flow Bytes/s and Flow Packets/s hold the strings Infinity and NaN) are stored as exact text and parsed in step 4. The script verifies the Parquet row and column counts against the workbook and writes the source description (sheet, SHA-256, counts, identifier columns found) to results/prep_report.json. All of Phase 1 reads the Parquet file, never the .xlsx.
 
 2.  **Data understanding** (notebook). List every column with its type, missing count and number of unique values. Find any identifier columns: Flow ID, Src/Dst IP, Src/Dst Port, Timestamp. The dataset description does not say which ones exist, so check (§3.2.4).
 
-3.  **Order check for the LSTM.** If a Timestamp exists, check that it is non-decreasing within each day. Also measure the label run lengths: if neighbouring rows usually share a label, the file order carries sequence. Write the finding down, because it decides which LSTM formulation you use (§4.3).
+3.  **Order check for the LSTM.** If a Timestamp exists, check that it is non-decreasing within each day. Also measure the label run lengths: if neighbouring rows usually share a label, the file order carries sequence. Write the finding down, because it decides which LSTM formulation you use (§4.3). *Result (done by convert_xlsx.py, saved under order_check in prep_report.json):* no Timestamp column exists. The rows are **sorted by class**, not by time: 79 label runs over 91,830 rows, P(next row has the same label) = 0.9992, and after the first ~26k rows (Normal with 36 single DoS rows mixed in) every class is one contiguous block. Shared labels therefore reflect how the file was assembled, not traffic sequence. Decision: **formulation B** (§4.3).
 
 4.  **Infinite values:** replace ±inf with NaN and count the affected rows.
 
@@ -188,12 +190,13 @@ Goal: turn the IDS2025 daily files into leakage-free partitions and a saved prep
 
 11. **Transform all three partitions** with the fitted state and cast them to float32.
 
-12. **Sort each partition back into row_index order.** train_test_split shuffles the rows. The stream must replay in the original order (§3.2.4), and the LSTM windows need that order too.
+12. **Sort each partition back into row_index order.** train_test_split shuffles the rows; sorting gives every partition file a fixed, reproducible order. (The stream does **not** replay in this order — see §6.2 — and formulation B does not depend on order.)
 
 ## 3.2 Outputs
 
 | **File**                                          | **Contents**                                                                                                                        | **Used by**                               |
 |---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
+| data/processed/ids2025_raw.parquet                | Whole workbook as read, values unchanged, plus row_index (written once by convert_xlsx.py)                                         | Phase 1 steps 2–12                        |
 | data/processed/{train,val,test}\_raw.parquet      | Cleaned but **unscaled** rows with row_index, display fields and both labels                                                        | Streamer (test only); FLOW_RECORD loading |
 | data/processed/X\_{train,val,test}.npy, y\_\*.npy | Scaled float32 matrices and labels in row_index order                                                                               | Model training, offline predictions       |
 | artefacts/feature_list.json                       | Ordered list of the F retained features                                                                                             | Engine, training                          |
@@ -277,7 +280,21 @@ The pattern is the same for all three models: **search once** with seed 42 using
 
 - **Choose the formulation using the order check from Phase 1.** (A) **Record windows** (the main design): the input is the last W records, shape (W, F), and the label is that of the last record. (B) **Fallback**: each flow’s F features treated as a sequence of F steps, shape (F, 1), with no buffer and no dependence on order. Use B if the file order carries no sequential meaning, or if A gives no benefit. Either way, say which one you used in Chapter Four (§3.3.10).
 
-- Build the windows **inside each partition** (control 7) with tf.keras.utils.timeseries_dataset_from_array. Do not build a full (N, W, F) array: at W = 20 it can need several gigabytes of RAM.
+- **Decision: formulation B is used** (deviation from the main design in §3.3.10). Justification, from the label-run statistics of the source sheet (results/prep_report.json, order_check):
+
+  | Class        | Rows   | Runs | Mean run | Median run | Longest run |
+  |--------------|--------|------|----------|------------|-------------|
+  | Normal       | 26,185 | 37   | 707.7    | 42         | 24,186      |
+  | Dos/DDos     | 26,066 | 37   | 704.5    | 1          | 26,030      |
+  | PortScan     | 25,409 | 1    | 25,409   | 25,409     | 25,409      |
+  | Brute Force  | 10,201 | 1    | 10,201   | 10,201     | 10,201      |
+  | Web Attack   | 2,067  | 1    | 2,067    | 2,067      | 2,067       |
+  | Botnet ARES  | 1,873  | 1    | 1,873    | 1,873      | 1,873       |
+  | Infiltration | 29     | 1    | 29       | 29         | 29          |
+
+  Overall: 79 runs, mean run length 1,162.4, median 14, maximum 26,030; consecutive rows share a label 99.92% of the time; 99.78%, 99.55% and 99.13% of all windows of W = 5, 10 and 20 consecutive rows contain a single label. The sheet carries no timestamp, so this is class-sorted order, not temporal sequence. Under formulation A the windows would encode position in a class block (the test partition, re-sorted by row_index, is blocked the same way), inflating scores without measuring sequential attack behaviour. Formulation B classifies each flow independently, needs no buffer and no W−1 warm-up records at run time, and is unaffected by the shuffled stream order (§6.2).
+
+- With formulation B, the W search dimension below does not apply; the input shape is (F, 1). (If formulation A is ever revisited, build the windows **inside each partition** (control 7) with tf.keras.utils.timeseries_dataset_from_array and never as a full (N, W, F) array.)
 
 - Architecture: 1–2 LSTM layers, then dropout, then a Dense output (sigmoid for binary, softmax over 7 for multi). Use Adam and class-weighted cross-entropy, with EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True) and at most 50 epochs.
 
@@ -541,7 +558,9 @@ t₄ is the moment the commit has finished, so it cannot be written in the same 
 
 ## 6.2 Streamer (producer)
 
-- Load test_raw.parquet. Draw the run sample with sample_seed: 5,000 rows for steady runs or 2,000 for burst runs, stratified. Re-sort the sample by row_index so it replays in the original order (§3.3.11).
+- Load test_raw.parquet. Draw the run sample with sample_seed: 5,000 rows for steady runs or 2,000 for burst runs, stratified. Then **replay the sample in a random order fixed by sample_seed** (a seeded permutation), so every run of a scenario sends the same records in the same order.
+
+  > **Justified deviation from §3.3.11** (“replayed in their original order”). The source sheet is sorted by class (§3.1 step 3; 99.92% of consecutive rows share a label), so the original order would send long single-class blocks — a 5,000-record run would be roughly 1,400 Normal, then 1,400 DoS, then 1,400 PortScan, and so on. That is not realistic traffic: it would make the dashboard and the S4 burst depend on which class block happens to be emitted. A seeded shuffle keeps the replay reproducible (NFR4) and mixes classes as live traffic would. IF and RF treat records independently and the LSTM uses formulation B (§4.3), so no model depends on the order.
 
 - Connect to 127.0.0.1:9100. Call setsockopt(IPPROTO_TCP, TCP_NODELAY, 1) and set a large send buffer (about 4 MB) so that a 1,000-record burst does not block the sender.
 
@@ -694,7 +713,7 @@ run.py starts the engine and the streamer as background processes and then strea
 
 ## 8.4 Correctness check
 
-For every run, join PREDICTION to the offline prediction file for the same model and seed on row_index; the labels must agree 100% (§3.3.11). For the LSTM, the offline reference must be computed over **the same streamed sequence**, because the windows depend on which rows came before. Any disagreement points to a difference between offline and online preprocessing (control 8).
+For every run, join PREDICTION to the offline prediction file for the same model and seed on row_index; the labels must agree 100% (§3.3.11). With formulation B (§4.3) the LSTM prediction does not depend on earlier rows, so the per-row offline predictions are a valid reference for every model. (Only under formulation A would the offline reference have to be computed over **the same streamed sequence**.) Any disagreement points to a difference between offline and online preprocessing (control 8).
 
 ## 8.5 Outputs for Chapter Four
 
@@ -704,7 +723,7 @@ For every run, join PREDICTION to the offline prediction file for the same model
 
 - Plots: latency CDF per model (S1), stacked component bars, throughput and p95 against Δt (S3), L over time during the burst (S4)
 
-- Optional robustness check (§3.2.4): train on Monday–Wednesday and test on Friday, for RF only, and report the drop in F1
+- Optional robustness check (§3.2.4): train on Monday–Wednesday and test on Friday, for RF only, and report the drop in F1. *Not possible with the dataset as obtained:* the single sheet has no day or timestamp column (§3.1 step 1). State this as a limitation in Chapter Four.
 
 # 9. Phase 7 — Testing for Chapter Four
 

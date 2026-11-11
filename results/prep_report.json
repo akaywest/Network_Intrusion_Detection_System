@@ -1,0 +1,431 @@
+{
+  "source": {
+    "file": "data/raw/IDS2025.xlsx",
+    "sha256": "d9f1d15abb54c80ade4efd264edd3a65821b72ec9619f0a64c8ebb7587134544",
+    "sheet_names": [
+      "sample_91830_without_text_field"
+    ],
+    "sheet": "sample_91830_without_text_field",
+    "dimension": "A1:CB91831",
+    "excel_data_rows": 91830,
+    "excel_columns": 80,
+    "renamed_by_strip": {},
+    "stored_dtypes": {
+      "Flow Bytess": "string (contains text cells)",
+      "Flow Packetss": "string (contains text cells)",
+      "newLabel": "string (contains text cells)"
+    },
+    "text_cells": {
+      "Flow Bytess": {
+        "NaN": 77,
+        "Infinity": 50
+      },
+      "Flow Packetss": {
+        "Infinity": 127
+      },
+      "newLabel": {
+        "Normal": 26185,
+        "Dos/DDos": 26066,
+        "PortScan": 25409,
+        "Brute Force": 10201,
+        "Web Attack": 2067,
+        "Botnet ARES": 1873,
+        "Infiltration": 29
+      }
+    },
+    "parquet": "data/processed/ids2025_raw.parquet",
+    "parquet_rows": 91830,
+    "parquet_columns": 81,
+    "timestamp_present": false,
+    "day_column_present": false,
+    "identifier_columns_found": [
+      "Source Port",
+      "Destination Port"
+    ],
+    "label_column": "newLabel"
+  },
+  "order_check": {
+    "n_rows": 91830,
+    "n_runs": 79,
+    "p_next_same_label": 0.999151,
+    "run_length": {
+      "mean": 1162.4,
+      "median": 14,
+      "max": 26030
+    },
+    "per_class": {
+      "Normal": {
+        "rows": 26185,
+        "runs": 37,
+        "mean": 707.7,
+        "median": 42,
+        "max": 24186
+      },
+      "Dos/DDos": {
+        "rows": 26066,
+        "runs": 37,
+        "mean": 704.5,
+        "median": 1,
+        "max": 26030
+      },
+      "PortScan": {
+        "rows": 25409,
+        "runs": 1,
+        "mean": 25409,
+        "median": 25409,
+        "max": 25409
+      },
+      "Brute Force": {
+        "rows": 10201,
+        "runs": 1,
+        "mean": 10201,
+        "median": 10201,
+        "max": 10201
+      },
+      "Web Attack": {
+        "rows": 2067,
+        "runs": 1,
+        "mean": 2067,
+        "median": 2067,
+        "max": 2067
+      },
+      "Botnet ARES": {
+        "rows": 1873,
+        "runs": 1,
+        "mean": 1873,
+        "median": 1873,
+        "max": 1873
+      },
+      "Infiltration": {
+        "rows": 29,
+        "runs": 1,
+        "mean": 29,
+        "median": 29,
+        "max": 29
+      }
+    },
+    "single_label_window_share": {
+      "W=5": 0.997778,
+      "W=10": 0.995491,
+      "W=20": 0.991308
+    },
+    "run_sequence": [
+      [
+        "Normal",
+        118
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        158
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        29
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        42
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        130
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        44
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        28
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        15
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        14
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        42
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        31
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        28
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        71
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        74
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        41
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        60
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        85
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        145
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        85
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        42
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        29
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        14
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        43
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        14
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        13
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        28
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        13
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        57
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        29
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        14
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        175
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        116
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        24186
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        57
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        27
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        43
+      ],
+      [
+        "Dos/DDos",
+        1
+      ],
+      [
+        "Normal",
+        45
+      ],
+      [
+        "Dos/DDos",
+        26030
+      ],
+      [
+        "PortScan",
+        25409
+      ],
+      [
+        "Brute Force",
+        10201
+      ],
+      [
+        "Web Attack",
+        2067
+      ],
+      [
+        "Botnet ARES",
+        1873
+      ],
+      [
+        "Infiltration",
+        29
+      ]
+    ]
+  }
+}

@@ -1,5 +1,7 @@
 # Every tunable setting for the NIDS (implementation plan §2.3; NFR4 reproducibility).
-paths: {raw: data/raw, processed: data/processed, artefacts: artefacts, db: db/nids.db}
+paths: {raw: data/raw, processed: data/processed, artefacts: artefacts, db: db/nids.db,
+        source_xlsx: data/raw/IDS2025.xlsx,               # never modified
+        raw_parquet: data/processed/ids2025_raw.parquet}   # written once by nids.prep.convert_xlsx
 
 # All sockets bind loopback only (NFR6).
 network: {host: 127.0.0.1, data_port: 9100, engine_ctl_port: 9101, streamer_ctl_port: 9102}
