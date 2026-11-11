@@ -35,12 +35,21 @@ Leakage control 5/6 (Table 3.12): only training and validation arrays are loaded
 Op determinism is enabled so a rerun reproduces the same weights (NFR4).
 
 Usage:  python -m nids.train.train_lstm [--config config.yaml] [--task binary|multi|both]
-                                        [--search-frac F] [--smoke]
+                                        [--search-frac F] [--smoke] [--fresh]
         --search-frac F: trials train on a stratified fraction F of the training partition
                  (plan §4.2-style compute fallback; a Chapter Four deviation if < 1). The
                  seed retrains always use the full partition.
         --smoke: small stratified subsample, 3 trials, at most 6 epochs, seeds 42-43,
                  100 timing calls; writes to data/processed/smoke_lstm/ only.
+        --fresh: ignore saved progress and start the search and retrains over.
+
+Resumable: after each trial its config, validation score and epoch log are appended to
+results/train_log/lstm_{task}_trials.jsonl (first line: run fingerprint), and a new
+search-best model is checkpointed to data/processed/lstm_ckpt/. Each seed model is saved
+as soon as it is retrained; its meta JSON (written last) marks it complete. Rerunning the
+same command skips finished trials and seeds. The trial sequence is seeded and every fit
+re-seeds after clearing the Keras session, so resumed results match an uninterrupted run.
+A log from a different configuration raises ResumeMismatch instead of being mixed in.
 """
 from __future__ import annotations
 
@@ -140,6 +149,7 @@ class EpochTimer(keras.callbacks.Callback):
 
 def fit_one(cfg: dict, seed: int, X_tr, y_tr, X_va, y_va, n_out: int, max_epochs: int,
             tag: str = "") -> tuple[keras.Model, dict]:
+    keras.backend.clear_session()  # each fit independent of earlier ones (resume-safe)
     keras.utils.set_random_seed(seed)  # == tf.keras.utils.set_random_seed (§3.3.10)
     model = build_model(cfg, X_tr.shape[1], n_out)
     timer = EpochTimer(tag)
@@ -213,15 +223,84 @@ def _timing_child(model_path: Path, rows_path: Path) -> None:
                       "implied_max_records_per_s": float(1000 / t.mean())}))
 
 
-def save_bundle(model: keras.Model, art: Path, task: str, seed: int, meta: dict) -> Path:
-    path = art / f"lstm_{task}_seed{seed}.keras"
-    model.save(path)
-    (art / f"lstm_{task}_seed{seed}.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
-    return path
+# ---- Resume support: trial log, search-best checkpoint, per-seed completion -------------
+# A run can be interrupted at any point and restarted with the same command. Completed
+# trials are read back from lstm_{task}_trials.jsonl and completed seeds from their
+# saved model + meta JSON. Every fit re-seeds from scratch (fit_one) and op determinism
+# is on, so a resumed run reproduces an uninterrupted one (NFR4).
+
+class ResumeMismatch(RuntimeError):
+    """Saved progress belongs to a different run configuration."""
+
+
+def write_json_atomic(path: Path, obj) -> None:
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(obj, indent=2) + "\n")
+    os.replace(tmp, path)
+
+
+def save_model_atomic(model: keras.Model, path: Path) -> None:
+    tmp = path.with_name(path.stem + ".tmp.keras")
+    model.save(tmp)
+    os.replace(tmp, path)
+
+
+def append_jsonl(path: Path, rec: dict) -> None:
+    with open(path, "a") as f:
+        f.write(json.dumps(rec) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def load_trials(path: Path, fp: dict, configs: list[dict]) -> list[dict]:
+    """Completed trials from the JSONL log, checked against fp and the seeded sequence.
+    A torn last line (crash mid-write) is dropped and the file rewritten without it."""
+    if not path.exists():
+        return []
+    lines = path.read_text().splitlines()
+    recs = []
+    for ln in lines:
+        try:
+            recs.append(json.loads(ln))
+        except json.JSONDecodeError:
+            break
+    if len(recs) < len(lines):
+        print(f"  dropping {len(lines) - len(recs)} incomplete line(s) from {path.name}")
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text("".join(json.dumps(r) + "\n" for r in recs))
+        os.replace(tmp, path)
+    if not recs:
+        return []
+    if recs[0].get("type") != "header" or recs[0].get("run_fingerprint") != fp:
+        raise ResumeMismatch(f"{path} was written by a different run configuration; "
+                             f"move it away or pass --fresh")
+    trials = []
+    for i, r in enumerate(recs[1:]):
+        if r.get("trial") != i + 1 or i >= len(configs) or r.get("config") != configs[i]:
+            raise ResumeMismatch(f"{path}: trial {i + 1} does not match the seeded sequence")
+        trials.append({k: v for k, v in r.items() if k != "type"})
+    return trials
+
+
+def seed_paths(art: Path, task: str, seed: int) -> tuple[Path, Path]:
+    return art / f"lstm_{task}_seed{seed}.keras", art / f"lstm_{task}_seed{seed}.meta.json"
+
+
+def load_done_seed(art: Path, task: str, seed: int, fp: dict, cfg: dict) -> dict | None:
+    """Meta of a completed seed retrain of this run, or None. The meta JSON is written
+    last, after the model and (seed 42) the timing, so its presence marks completion."""
+    mp, jp = seed_paths(art, task, seed)
+    if not (mp.exists() and jp.exists()):
+        return None
+    meta = json.loads(jp.read_text())
+    if meta.get("run_fingerprint") != fp or meta.get("config") != cfg:
+        return None
+    return meta
 
 
 def train_task(task: str, d: dict, search_idx: np.ndarray, seeds: list[int], art: Path,
-               names: list[str], smoke: bool, search_frac: float) -> tuple[dict, dict]:
+               names: list[str], smoke: bool, search_frac: float, log_dir: Path,
+               ckpt_dir: Path, fresh: bool = False) -> tuple[dict, dict]:
     spec = TASKS[task]
     X_tr, y_tr = to_seq(d["X_train"]), d[f"y_train_{spec['y']}"].astype(np.int64)
     X_va, y_va = to_seq(d["X_val"]), d[f"y_val_{spec['y']}"].astype(np.int64)
@@ -230,39 +309,85 @@ def train_task(task: str, d: dict, search_idx: np.ndarray, seeds: list[int], art
     n_trials = SMOKE_N_TRIALS if smoke else N_TRIALS
     max_epochs = SMOKE_MAX_EPOCHS if smoke else MAX_EPOCHS
     n_timing = SMOKE_N_TIMING if smoke else N_TIMING
-    art.mkdir(parents=True, exist_ok=True)
+    for p in (art, log_dir, ckpt_dir):
+        p.mkdir(parents=True, exist_ok=True)
+
+    configs = sample_configs(n_trials)  # same seeded sequence on every (re)start
+    fp = json.loads(json.dumps({
+        "task": task, "formulation": FORMULATION, "smoke": smoke, "search_frac": search_frac,
+        "n_search_rows": int(len(search_idx)), "n_train": int(len(y_tr)),
+        "n_val": int(len(y_va)), "n_features": int(F), "n_trials": n_trials,
+        "max_epochs": max_epochs, "patience": PATIENCE, "search_seed": SEARCH_SEED,
+        "space": SPACE}))
+    trials_path = log_dir / f"lstm_{task}_trials.jsonl"
+    ckpt_model = ckpt_dir / f"lstm_{task}_search_best.keras"
+    ckpt_info = ckpt_dir / f"lstm_{task}_search_best.json"
+    if fresh:
+        for p in (trials_path, ckpt_model, ckpt_info):
+            p.unlink(missing_ok=True)
 
     # 1. Random search (seed 42 for every trial; selection on validation).
-    configs = sample_configs(n_trials)
+    trials = load_trials(trials_path, fp, configs)
+    if not trials_path.exists() or trials_path.stat().st_size == 0:
+        trials_path.write_text("")
+        append_jsonl(trials_path, {"type": "header", "run_fingerprint": fp})
+    n_loaded = len(trials)
+    best_i, best_model = -1, None
+    for i, r in enumerate(trials):
+        if best_i < 0 or r["val_score"] > trials[best_i]["val_score"]:
+            best_i = i
     print(f"\n== LSTM {task} (formulation {FORMULATION}, input ({F}, 1)): {n_trials} trials "
-          f"on {len(search_idx)} training rows, select by validation {spec['metric']}")
-    trials, best_i, best_model = [], -1, None
+          f"on {len(search_idx)} training rows, select by validation {spec['metric']}"
+          + (f"; resuming, {n_loaded} trial(s) already done" if n_loaded else ""))
     t0 = time.perf_counter()
-    for i, cfg in enumerate(configs):
+    for i in range(n_loaded, n_trials):
+        cfg = configs[i]
         print(f"  trial {i + 1}/{n_trials}: {cfg}", flush=True)
         model, fl = fit_one(cfg, SEARCH_SEED, X_tr[search_idx], y_tr[search_idx], X_va, y_va,
                             n_out, max_epochs, tag=f"t{i + 1}")
         score = selection_score(task, y_va, predict_scores(model, X_va, task))
-        trials.append({"trial": i + 1, "config": cfg, "val_score": score, **fl})
+        rec = {"trial": i + 1, "config": cfg, "val_score": score, **fl}
         print(f"  -> val {spec['metric']}={score:.4f}, {fl['epochs_run']} epochs "
               f"(best {fl['best_epoch']}), {fl['mean_epoch_s']:.1f} s/epoch", flush=True)
         if best_i < 0 or score > trials[best_i]["val_score"]:
             best_i, best_model = i, model
-        else:
-            del model
+            save_model_atomic(model, ckpt_model)
+            write_json_atomic(ckpt_info, {"trial": i + 1, "run_fingerprint": fp})
+        trials.append(rec)
+        append_jsonl(trials_path, {"type": "trial", **rec})  # after the checkpoint
     search_s = time.perf_counter() - t0
     cfg = configs[best_i]
+    best_fl = {k: v for k, v in trials[best_i].items() if k not in ("trial", "config", "val_score")}
     print(f"Best trial {best_i + 1}: val {spec['metric']}={trials[best_i]['val_score']:.4f} {cfg}")
+
+    def search_best_model() -> keras.Model:
+        if best_model is not None:
+            return best_model
+        info = json.loads(ckpt_info.read_text()) if ckpt_info.exists() else {}
+        if (ckpt_model.exists() and info.get("trial") == best_i + 1
+                and info.get("run_fingerprint") == fp):
+            print(f"  seed {SEARCH_SEED}: loaded search-best checkpoint (trial {best_i + 1})")
+            return keras.models.load_model(ckpt_model)
+        print(f"  seed {SEARCH_SEED}: no checkpoint for trial {best_i + 1}; refitting it")
+        return fit_one(cfg, SEARCH_SEED, X_tr, y_tr, X_va, y_va, n_out, max_epochs,
+                       tag=f"s{SEARCH_SEED}")[0]
 
     # 2-3. Seed retrains; the decision rule is fixed on the seed-42 model.
     # With search_frac == 1 the best trial already IS the config trained on the full
     # partition with seed 42, so it is reused rather than refitted.
     print(f"Retraining with seeds {seeds}:")
-    decision, per_seed, timing = None, [], None
+    decision, per_seed, timing, seeds_loaded = None, [], None, []
     for seed in seeds:
+        done = None if fresh else load_done_seed(art, task, seed, fp, cfg)
+        if done is not None:
+            per_seed.append(done["validation"])
+            decision = decision or done["threshold_choice"]
+            timing = timing or done.get("single_record_timing")
+            seeds_loaded.append(seed)
+            print(f"  seed {seed}: already done, skipped")
+            continue
         if seed == SEARCH_SEED and search_frac >= 1.0:
-            model, fl = best_model, {k: v for k, v in trials[best_i].items()
-                                     if k not in ("trial", "config", "val_score")}
+            model, fl = search_best_model(), best_fl
         else:
             model, fl = fit_one(cfg, seed, X_tr, y_tr, X_va, y_va, n_out, max_epochs,
                                 tag=f"s{seed}")
@@ -284,6 +409,22 @@ def train_task(task: str, d: dict, search_idx: np.ndarray, seeds: list[int], art
             m = multi_val_metrics(y_va, p, np.arange(len(names)), names)
             msg = f"macro-F1={m['macro_f1']:.4f} bin-F1={m['binary_collapsed']['f1']:.4f}"
         print(f"  seed {seed}: {msg} ({fl['epochs_run']} epochs, {fl['mean_epoch_s']:.1f} s/epoch)")
+        mp, jp = seed_paths(art, task, seed)
+        save_model_atomic(model, mp)  # saved immediately after the retrain
+        seed_timing = None
+        if seed == SEARCH_SEED:
+            rng = np.random.default_rng(SEARCH_SEED)
+            rows = d["X_val"][rng.choice(len(X_va), size=n_timing, replace=len(X_va) < n_timing)]
+            seed_timing, out = time_single_record(mp, rows)
+            ref = model.predict(to_seq(rows), batch_size=4096, verbose=0)
+            seed_timing["max_abs_diff_vs_predict"] = float(np.abs(out - ref).max())
+            timing = seed_timing
+            print(f"  single-record tf.function (1 thread, {n_timing} calls): median "
+                  f"{seed_timing['median_ms']:.2f} ms, p95 {seed_timing['p95_ms']:.2f} ms; "
+                  f"max |diff| vs predict {seed_timing['max_abs_diff_vs_predict']:.2e}")
+        rec = {"seed": seed, "tau": tau, **{k: fl[k] for k in (
+            "epochs_run", "best_epoch", "fit_s", "mean_epoch_s", "epoch_s")}, **m}
+        per_seed.append(rec)
         meta = {"model": "LSTM", "task": task, "formulation": FORMULATION,
                 "formulation_desc": "each flow's F scaled features as a sequence of F steps",
                 "input_shape": [F, 1], "warmup_records": 0, "features": int(F),
@@ -291,21 +432,10 @@ def train_task(task: str, d: dict, search_idx: np.ndarray, seeds: list[int], art
                 "classes": list(range(n_out)) if task == "multi" else [0, 1],
                 "class_names": names if task == "multi" else ["Normal", "Malicious"],
                 "output": ("P(Malicious), sigmoid" if task == "binary"
-                           else "class probabilities, softmax")}
-        path = save_bundle(model, art, task, seed, meta)
-        if seed == SEARCH_SEED:
-            rng = np.random.default_rng(SEARCH_SEED)
-            rows = d["X_val"][rng.choice(len(X_va), size=n_timing, replace=len(X_va) < n_timing)]
-            timing, out = time_single_record(path, rows)
-            ref = model.predict(to_seq(rows), batch_size=4096, verbose=0)
-            timing["max_abs_diff_vs_predict"] = float(np.abs(out - ref).max())
-            print(f"  single-record tf.function (1 thread, {n_timing} calls): median "
-                  f"{timing['median_ms']:.2f} ms, p95 {timing['p95_ms']:.2f} ms; "
-                  f"max |diff| vs predict {timing['max_abs_diff_vs_predict']:.2e}")
-        per_seed.append({"seed": seed, "tau": tau, **{k: fl[k] for k in (
-            "epochs_run", "best_epoch", "fit_s", "mean_epoch_s", "epoch_s")}, **m})
-        if model is not best_model:
-            del model
+                           else "class probabilities, softmax"),
+                "threshold_choice": decision, "validation": rec,
+                "single_record_timing": seed_timing, "run_fingerprint": fp}
+        write_json_atomic(jp, meta)  # written last: marks this seed as complete
         keras.backend.clear_session()
 
     keys = (("precision", "recall", "f1", "roc_auc", "fpr") if task == "binary"
@@ -336,11 +466,15 @@ def train_task(task: str, d: dict, search_idx: np.ndarray, seeds: list[int], art
               "threshold_choice": decision, "seeds": seeds, "class_names": names,
               "tensorflow_version": tf.__version__, "keras_version": keras.__version__,
               "smoke": smoke}
-    (art / f"lstm_{task}_config.json").write_text(json.dumps(config, indent=2) + "\n")
+    write_json_atomic(art / f"lstm_{task}_config.json", config)
 
     log = {"model": "LSTM", "task": task, "formulation": FORMULATION, "smoke": smoke,
            "test_partition_used": False, "n_train": int(len(y_tr)), "n_val": int(len(y_va)),
-           "n_val_malicious": int(d["y_val_bin"].sum()), "search_s": round(search_s, 1),
+           "n_val_malicious": int(d["y_val_bin"].sum()),
+           "search_s_this_process": round(search_s, 1),
+           "search_fit_s_total": round(float(sum(r["fit_s"] for r in trials)), 1),
+           "resume": {"trials_loaded": n_loaded, "seeds_loaded": seeds_loaded,
+                      "trials_file": trials_path.name},
            "class_weights": class_weights(y_tr), "chosen": cfg,
            "best_val_score": trials[best_i]["val_score"],
            "search_epoch_s_summary": {"n_epochs": len(all_epoch_s),
@@ -355,15 +489,18 @@ def train_task(task: str, d: dict, search_idx: np.ndarray, seeds: list[int], art
     return config, log
 
 
-def run(cfg: dict, tasks: list[str], smoke: bool = False, search_frac: float = 1.0) -> dict:
+def run(cfg: dict, tasks: list[str], smoke: bool = False, search_frac: float = 1.0,
+        fresh: bool = False) -> dict:
     tf.config.experimental.enable_op_determinism()  # reproducible reruns (NFR4)
     proc = ROOT / cfg["paths"]["processed"]
     if smoke:
         out = proc / "smoke_lstm"
         art, log_dir, seeds = out / "artefacts", out / "train_log", cfg["seeds"][:2]
+        ckpt_dir = out / "ckpt"
     else:
         art = ROOT / cfg["paths"]["artefacts"]
         log_dir, seeds = ROOT / "results" / "train_log", cfg["seeds"]
+        ckpt_dir = proc / "lstm_ckpt"  # git-ignored (data/processed)
     names = json.loads((ROOT / cfg["paths"]["artefacts"] / "label_map.json").read_text())["classes"]
 
     d = load_partitions(proc)  # train + val only (control 6)
@@ -376,8 +513,9 @@ def run(cfg: dict, tasks: list[str], smoke: bool = False, search_frac: float = 1
     logs = {}
     log_dir.mkdir(parents=True, exist_ok=True)
     for task in tasks:
-        _, log = train_task(task, d, search_idx, seeds, art, names, smoke, search_frac)
-        (log_dir / f"lstm_{task}.json").write_text(json.dumps(log, indent=2) + "\n")
+        _, log = train_task(task, d, search_idx, seeds, art, names, smoke, search_frac,
+                            log_dir, ckpt_dir, fresh=fresh)
+        write_json_atomic(log_dir / f"lstm_{task}.json", log)
         logs[task] = log
     print(f"\nWrote models + meta/configs to {art}; logs to {log_dir}")
     return logs
@@ -392,6 +530,8 @@ def main() -> None:
     ap.add_argument("--smoke", action="store_true",
                     help="small subsample, 3 trials, <=6 epochs, 2 seeds; "
                          "output to data/processed/smoke_lstm/")
+    ap.add_argument("--fresh", action="store_true",
+                    help="ignore saved progress (trial log, checkpoint, finished seeds)")
     ap.add_argument("--time-model", type=Path, help=argparse.SUPPRESS)  # internal: timing child
     ap.add_argument("--time-rows", type=Path, help=argparse.SUPPRESS)
     args = ap.parse_args()
@@ -400,7 +540,7 @@ def main() -> None:
         return
     tasks = ["binary", "multi"] if args.task == "both" else [args.task]
     run(yaml.safe_load(Path(args.config).read_text()), tasks, smoke=args.smoke,
-        search_frac=args.search_frac)
+        search_frac=args.search_frac, fresh=args.fresh)
 
 
 if __name__ == "__main__":
