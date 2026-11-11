@@ -1,0 +1,27 @@
+nohup: ignoring input
+RF: 40102 training rows, 8593 validation rows
+
+== RF binary: search 30 trials x 5 folds on 40102 training rows, scoring f1
+Fitting 5 folds for each of 30 candidates, totalling 150 fits
+Best CV f1=0.9824: {'class_weight': 'balanced_subsample', 'max_depth': 30, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 8, 'n_estimators': 382}
+Threshold rule: 0.5 (val F1 @0.5=0.9817, @tuned 0.3706=0.9824, gain +0.0007, min 0.005)
+Retraining with seeds [42, 43, 44, 45, 46]:
+  seed 42: tau=0.5000 P=0.9751 R=0.9884 F1=0.9817 AUC=0.9976
+  single-row predict_proba (n_jobs=1, 1000 calls): median 31.43 ms, p95 34.60 ms
+  seed 43: tau=0.5000 P=0.9747 R=0.9897 F1=0.9821 AUC=0.9976
+  seed 44: tau=0.5000 P=0.9751 R=0.9895 F1=0.9822 AUC=0.9976
+  seed 45: tau=0.5000 P=0.9757 R=0.9899 F1=0.9828 AUC=0.9976
+  seed 46: tau=0.5000 P=0.9757 R=0.9886 F1=0.9821 AUC=0.9976
+
+== RF multi: search 30 trials x 5 folds on 40102 training rows, scoring f1_macro
+Fitting 5 folds for each of 30 candidates, totalling 150 fits
+Best CV f1_macro=0.9261: {'class_weight': 'balanced_subsample', 'max_depth': None, 'max_features': 'log2', 'min_samples_leaf': 1, 'min_samples_split': 3, 'n_estimators': 317}
+Retraining with seeds [42, 43, 44, 45, 46]:
+  seed 42: macro-F1=0.9455 bin-F1=0.9798
+  single-row predict_proba (n_jobs=1, 1000 calls): median 25.97 ms, p95 28.26 ms
+  seed 43: macro-F1=0.9455 bin-F1=0.9793
+  seed 44: macro-F1=0.9459 bin-F1=0.9798
+  seed 45: macro-F1=0.9458 bin-F1=0.9796
+  seed 46: macro-F1=0.9449 bin-F1=0.9794
+
+Wrote bundles + configs to /home/akay/nids/artefacts; logs to /home/akay/nids/results/train_log

@@ -1,0 +1,976 @@
+{
+  "model": "RandomForest",
+  "task": "multi",
+  "smoke": false,
+  "test_partition_used": false,
+  "n_train": 40102,
+  "n_val": 8593,
+  "n_val_malicious": 4836,
+  "search_s": 946.2,
+  "best_cv_score": 0.9261350854601631,
+  "chosen": {
+    "class_weight": "balanced_subsample",
+    "max_depth": null,
+    "max_features": "log2",
+    "min_samples_leaf": 1,
+    "min_samples_split": 3,
+    "n_estimators": 317
+  },
+  "search_trials": [
+    {
+      "rank": 1,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": null,
+        "max_features": "log2",
+        "min_samples_leaf": 1,
+        "min_samples_split": 3,
+        "n_estimators": 317
+      },
+      "cv_mean": 0.9261350854601631,
+      "cv_sd": 0.03287558720130707,
+      "mean_fit_s": 35.36467251777649
+    },
+    {
+      "rank": 2,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": 30,
+        "max_features": "sqrt",
+        "min_samples_leaf": 2,
+        "min_samples_split": 9,
+        "n_estimators": 392
+      },
+      "cv_mean": 0.9254673935368187,
+      "cv_sd": 0.03244785392084505,
+      "mean_fit_s": 51.778986310958864
+    },
+    {
+      "rank": 3,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": null,
+        "max_features": "log2",
+        "min_samples_leaf": 2,
+        "min_samples_split": 7,
+        "n_estimators": 153
+      },
+      "cv_mean": 0.9238261239732759,
+      "cv_sd": 0.032548186611175235,
+      "mean_fit_s": 15.871999168395996
+    },
+    {
+      "rank": 4,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": 30,
+        "max_features": "sqrt",
+        "min_samples_leaf": 4,
+        "min_samples_split": 5,
+        "n_estimators": 321
+      },
+      "cv_mean": 0.9233327442038695,
+      "cv_sd": 0.03162119618310086,
+      "mean_fit_s": 40.99857501983642
+    },
+    {
+      "rank": 5,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": 30,
+        "max_features": "sqrt",
+        "min_samples_leaf": 2,
+        "min_samples_split": 8,
+        "n_estimators": 382
+      },
+      "cv_mean": 0.9230714133316157,
+      "cv_sd": 0.03277718313105688,
+      "mean_fit_s": 50.236480712890625
+    },
+    {
+      "rank": 6,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 30,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1,
+        "min_samples_split": 5,
+        "n_estimators": 112
+      },
+      "cv_mean": 0.9214820956298911,
+      "cv_sd": 0.03279083735537739,
+      "mean_fit_s": 8.655294847488403
+    },
+    {
+      "rank": 7,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 20,
+        "max_features": "sqrt",
+        "min_samples_leaf": 2,
+        "min_samples_split": 9,
+        "n_estimators": 393
+      },
+      "cv_mean": 0.9209313771972931,
+      "cv_sd": 0.02057385567170108,
+      "mean_fit_s": 32.128126287460326
+    },
+    {
+      "rank": 8,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": null,
+        "max_features": "sqrt",
+        "min_samples_leaf": 3,
+        "min_samples_split": 9,
+        "n_estimators": 288
+      },
+      "cv_mean": 0.9206561646513531,
+      "cv_sd": 0.020303713544801014,
+      "mean_fit_s": 23.382784271240233
+    },
+    {
+      "rank": 9,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 20,
+        "max_features": "log2",
+        "min_samples_leaf": 1,
+        "min_samples_split": 3,
+        "n_estimators": 466
+      },
+      "cv_mean": 0.9199807871270181,
+      "cv_sd": 0.03345264773484014,
+      "mean_fit_s": 30.526733589172363
+    },
+    {
+      "rank": 10,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": null,
+        "max_features": "log2",
+        "min_samples_leaf": 1,
+        "min_samples_split": 4,
+        "n_estimators": 406
+      },
+      "cv_mean": 0.9193894771263709,
+      "cv_sd": 0.028488444488894912,
+      "mean_fit_s": 26.943253421783446
+    },
+    {
+      "rank": 11,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": null,
+        "max_features": "log2",
+        "min_samples_leaf": 2,
+        "min_samples_split": 10,
+        "n_estimators": 445
+      },
+      "cv_mean": 0.9193236889721004,
+      "cv_sd": 0.02410352812125705,
+      "mean_fit_s": 28.83601508140564
+    },
+    {
+      "rank": 12,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 30,
+        "max_features": "sqrt",
+        "min_samples_leaf": 2,
+        "min_samples_split": 4,
+        "n_estimators": 162
+      },
+      "cv_mean": 0.91645429614472,
+      "cv_sd": 0.027468688633484686,
+      "mean_fit_s": 13.073983955383301
+    },
+    {
+      "rank": 13,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 30,
+        "max_features": "log2",
+        "min_samples_leaf": 1,
+        "min_samples_split": 5,
+        "n_estimators": 149
+      },
+      "cv_mean": 0.9162750409557857,
+      "cv_sd": 0.027600175679967177,
+      "mean_fit_s": 9.866531658172608
+    },
+    {
+      "rank": 14,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": null,
+        "max_features": "log2",
+        "min_samples_leaf": 1,
+        "min_samples_split": 10,
+        "n_estimators": 256
+      },
+      "cv_mean": 0.9156055236780622,
+      "cv_sd": 0.02739107789062865,
+      "mean_fit_s": 16.373904323577882
+    },
+    {
+      "rank": 15,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": null,
+        "max_features": "log2",
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "n_estimators": 413
+      },
+      "cv_mean": 0.9149162991480256,
+      "cv_sd": 0.048653354380132983,
+      "mean_fit_s": 44.11669864654541
+    },
+    {
+      "rank": 16,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": null,
+        "max_features": "log2",
+        "min_samples_leaf": 2,
+        "min_samples_split": 4,
+        "n_estimators": 326
+      },
+      "cv_mean": 0.9138781294606128,
+      "cv_sd": 0.028502651485792077,
+      "mean_fit_s": 20.583350563049315
+    },
+    {
+      "rank": 17,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": 20,
+        "max_features": "log2",
+        "min_samples_leaf": 2,
+        "min_samples_split": 5,
+        "n_estimators": 369
+      },
+      "cv_mean": 0.9122586005958343,
+      "cv_sd": 0.04860311266156851,
+      "mean_fit_s": 37.33815040588379
+    },
+    {
+      "rank": 18,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 30,
+        "max_features": "log2",
+        "min_samples_leaf": 3,
+        "min_samples_split": 8,
+        "n_estimators": 430
+      },
+      "cv_mean": 0.9114365744686305,
+      "cv_sd": 0.01733493733587384,
+      "mean_fit_s": 27.89738521575928
+    },
+    {
+      "rank": 19,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 30,
+        "max_features": "sqrt",
+        "min_samples_leaf": 4,
+        "min_samples_split": 4,
+        "n_estimators": 388
+      },
+      "cv_mean": 0.9107383571976433,
+      "cv_sd": 0.020830276381057115,
+      "mean_fit_s": 30.846373987197875
+    },
+    {
+      "rank": 20,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": null,
+        "max_features": "sqrt",
+        "min_samples_leaf": 4,
+        "min_samples_split": 8,
+        "n_estimators": 351
+      },
+      "cv_mean": 0.9104149045170666,
+      "cv_sd": 0.020991379333222586,
+      "mean_fit_s": 27.808658838272095
+    },
+    {
+      "rank": 21,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": null,
+        "max_features": "sqrt",
+        "min_samples_leaf": 4,
+        "min_samples_split": 9,
+        "n_estimators": 251
+      },
+      "cv_mean": 0.9100040085238736,
+      "cv_sd": 0.019625400695912454,
+      "mean_fit_s": 20.364245080947875
+    },
+    {
+      "rank": 22,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 30,
+        "max_features": "log2",
+        "min_samples_leaf": 3,
+        "min_samples_split": 2,
+        "n_estimators": 104
+      },
+      "cv_mean": 0.9072221726229088,
+      "cv_sd": 0.014879004071039039,
+      "mean_fit_s": 6.556614017486572
+    },
+    {
+      "rank": 23,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 20,
+        "max_features": "log2",
+        "min_samples_leaf": 4,
+        "min_samples_split": 4,
+        "n_estimators": 463
+      },
+      "cv_mean": 0.8995403195419339,
+      "cv_sd": 0.020884517970004065,
+      "mean_fit_s": 29.43562216758728
+    },
+    {
+      "rank": 24,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 20,
+        "max_features": "log2",
+        "min_samples_leaf": 4,
+        "min_samples_split": 8,
+        "n_estimators": 363
+      },
+      "cv_mean": 0.8993158978299209,
+      "cv_sd": 0.02068546623758345,
+      "mean_fit_s": 23.131680393218993
+    },
+    {
+      "rank": 25,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 10,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1,
+        "min_samples_split": 8,
+        "n_estimators": 108
+      },
+      "cv_mean": 0.8933561694869251,
+      "cv_sd": 0.031052760650913648,
+      "mean_fit_s": 8.1489022731781
+    },
+    {
+      "rank": 26,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 10,
+        "max_features": "sqrt",
+        "min_samples_leaf": 3,
+        "min_samples_split": 3,
+        "n_estimators": 487
+      },
+      "cv_mean": 0.8931797171259784,
+      "cv_sd": 0.022281060634230073,
+      "mean_fit_s": 37.218998432159424
+    },
+    {
+      "rank": 27,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": 10,
+        "max_features": "log2",
+        "min_samples_leaf": 4,
+        "min_samples_split": 9,
+        "n_estimators": 162
+      },
+      "cv_mean": 0.8925533245668456,
+      "cv_sd": 0.03092338855459266,
+      "mean_fit_s": 15.084514665603638
+    },
+    {
+      "rank": 28,
+      "params": {
+        "class_weight": "balanced_subsample",
+        "max_depth": 10,
+        "max_features": "log2",
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "n_estimators": 158
+      },
+      "cv_mean": 0.8859534432272037,
+      "cv_sd": 0.04740166438804804,
+      "mean_fit_s": 15.234420585632325
+    },
+    {
+      "rank": 29,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 10,
+        "max_features": "log2",
+        "min_samples_leaf": 3,
+        "min_samples_split": 10,
+        "n_estimators": 127
+      },
+      "cv_mean": 0.8802312847256479,
+      "cv_sd": 0.018372807089482714,
+      "mean_fit_s": 7.580707979202271
+    },
+    {
+      "rank": 30,
+      "params": {
+        "class_weight": "balanced",
+        "max_depth": 10,
+        "max_features": "log2",
+        "min_samples_leaf": 4,
+        "min_samples_split": 3,
+        "n_estimators": 132
+      },
+      "cv_mean": 0.8706160432726963,
+      "cv_sd": 0.017721380573367404,
+      "mean_fit_s": 7.844066381454468
+    }
+  ],
+  "refit_validation": {
+    "macro_f1": 0.945543286667144,
+    "accuracy": 0.9766088676829978,
+    "per_class_recall": {
+      "Normal": 0.9622038860793186,
+      "Botnet": 0.9854368932038835,
+      "Brute Force": 0.9941916747337851,
+      "DoS/DDoS": 0.9878277153558053,
+      "Infiltration": 0.6,
+      "PortScan": 0.9759036144578314,
+      "Web Attack": 0.9770491803278688
+    },
+    "binary_collapsed": {
+      "f1": 0.9798135054821191,
+      "roc_auc": 0.9973352746777837
+    },
+    "confusion_matrix": [
+      [
+        3615,
+        19,
+        1,
+        122,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        203,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        6,
+        0,
+        1027,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        39,
+        0,
+        0,
+        3165,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        1,
+        0,
+        81,
+        0
+      ],
+      [
+        5,
+        0,
+        1,
+        1,
+        0,
+        0,
+        298
+      ]
+    ]
+  },
+  "threshold_choice": {
+    "rule": "argmax"
+  },
+  "per_seed_validation": [
+    {
+      "seed": 42,
+      "tau": null,
+      "fit_s": 0.0,
+      "macro_f1": 0.945543286667144,
+      "accuracy": 0.9766088676829978,
+      "per_class_recall": {
+        "Normal": 0.9622038860793186,
+        "Botnet": 0.9854368932038835,
+        "Brute Force": 0.9941916747337851,
+        "DoS/DDoS": 0.9878277153558053,
+        "Infiltration": 0.6,
+        "PortScan": 0.9759036144578314,
+        "Web Attack": 0.9770491803278688
+      },
+      "binary_collapsed": {
+        "f1": 0.9798135054821191,
+        "roc_auc": 0.9973352746777837
+      },
+      "confusion_matrix": [
+        [
+          3615,
+          19,
+          1,
+          122,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          203,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          6,
+          0,
+          1027,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          39,
+          0,
+          0,
+          3165,
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          81,
+          0
+        ],
+        [
+          5,
+          0,
+          1,
+          1,
+          0,
+          0,
+          298
+        ]
+      ]
+    },
+    {
+      "seed": 43,
+      "tau": null,
+      "fit_s": 9.59,
+      "macro_f1": 0.9454673829543514,
+      "accuracy": 0.9760269987198883,
+      "per_class_recall": {
+        "Normal": 0.9622038860793186,
+        "Botnet": 0.9854368932038835,
+        "Brute Force": 0.995159728944821,
+        "DoS/DDoS": 0.9859550561797753,
+        "Infiltration": 0.6,
+        "PortScan": 0.9759036144578314,
+        "Web Attack": 0.9770491803278688
+      },
+      "binary_collapsed": {
+        "f1": 0.9792905474677056,
+        "roc_auc": 0.9973712153084852
+      },
+      "confusion_matrix": [
+        [
+          3615,
+          18,
+          1,
+          122,
+          0,
+          0,
+          1
+        ],
+        [
+          3,
+          203,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          1028,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          45,
+          0,
+          0,
+          3159,
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          81,
+          0
+        ],
+        [
+          5,
+          0,
+          1,
+          1,
+          0,
+          0,
+          298
+        ]
+      ]
+    },
+    {
+      "seed": 44,
+      "tau": null,
+      "fit_s": 9.92,
+      "macro_f1": 0.9458861619586708,
+      "accuracy": 0.9766088676829978,
+      "per_class_recall": {
+        "Normal": 0.9622038860793186,
+        "Botnet": 0.9854368932038835,
+        "Brute Force": 0.995159728944821,
+        "DoS/DDoS": 0.9875156054931336,
+        "Infiltration": 0.6,
+        "PortScan": 0.9759036144578314,
+        "Web Attack": 0.9770491803278688
+      },
+      "binary_collapsed": {
+        "f1": 0.9798135054821191,
+        "roc_auc": 0.997378287852199
+      },
+      "confusion_matrix": [
+        [
+          3615,
+          18,
+          1,
+          123,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          203,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          1028,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          40,
+          0,
+          0,
+          3164,
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          81,
+          0
+        ],
+        [
+          5,
+          0,
+          1,
+          1,
+          0,
+          0,
+          298
+        ]
+      ]
+    },
+    {
+      "seed": 45,
+      "tau": null,
+      "fit_s": 9.96,
+      "macro_f1": 0.9457564500260618,
+      "accuracy": 0.976376120097754,
+      "per_class_recall": {
+        "Normal": 0.9627362257120042,
+        "Botnet": 0.9854368932038835,
+        "Brute Force": 0.9941916747337851,
+        "DoS/DDoS": 0.9865792759051186,
+        "Infiltration": 0.6,
+        "PortScan": 0.9759036144578314,
+        "Web Attack": 0.9770491803278688
+      },
+      "binary_collapsed": {
+        "f1": 0.9795960217369014,
+        "roc_auc": 0.9975097215828496
+      },
+      "confusion_matrix": [
+        [
+          3617,
+          18,
+          1,
+          121,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          203,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          6,
+          0,
+          1027,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          43,
+          0,
+          0,
+          3161,
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          81,
+          0
+        ],
+        [
+          5,
+          0,
+          1,
+          1,
+          0,
+          0,
+          298
+        ]
+      ]
+    },
+    {
+      "seed": 46,
+      "tau": null,
+      "fit_s": 10.02,
+      "macro_f1": 0.9448715690350811,
+      "accuracy": 0.9761433725125102,
+      "per_class_recall": {
+        "Normal": 0.961671546446633,
+        "Botnet": 0.9854368932038835,
+        "Brute Force": 0.9941916747337851,
+        "DoS/DDoS": 0.987203495630462,
+        "Infiltration": 0.6,
+        "PortScan": 0.9759036144578314,
+        "Web Attack": 0.9770491803278688
+      },
+      "binary_collapsed": {
+        "f1": 0.9794036274208423,
+        "roc_auc": 0.9974846787237851
+      },
+      "confusion_matrix": [
+        [
+          3613,
+          20,
+          1,
+          122,
+          0,
+          0,
+          1
+        ],
+        [
+          3,
+          203,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          6,
+          0,
+          1027,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          41,
+          0,
+          0,
+          3163,
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          81,
+          0
+        ],
+        [
+          5,
+          0,
+          1,
+          1,
+          0,
+          0,
+          298
+        ]
+      ]
+    }
+  ],
+  "validation_mean_sd": {
+    "macro_f1": {
+      "mean": 0.9455049701282618,
+      "sd": 0.0003913525418995941
+    },
+    "accuracy": {
+      "mean": 0.9763528453392297,
+      "sd": 0.0002653730769461658
+    }
+  },
+  "single_row_timing": {
+    "n_calls": 1000,
+    "n_jobs": 1,
+    "source": "validation rows",
+    "mean_ms": 26.32470459,
+    "median_ms": 25.971394,
+    "p95_ms": 28.26332035,
+    "p99_ms": 32.16069932,
+    "max_ms": 42.258998,
+    "implied_max_records_per_s": 37.98713093175113
+  },
+  "python": "3.12.3",
+  "sklearn_version": "1.9.1"
+}

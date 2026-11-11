@@ -1,0 +1,83 @@
+{
+  "model": "RandomForestClassifier",
+  "task": "binary",
+  "hyperparameters": {
+    "class_weight": "balanced_subsample",
+    "max_depth": 30,
+    "max_features": "sqrt",
+    "min_samples_leaf": 2,
+    "min_samples_split": 8,
+    "n_estimators": 382
+  },
+  "search": {
+    "method": "RandomizedSearchCV",
+    "n_iter": 30,
+    "cv": "StratifiedKFold(5, shuffle=True, random_state=42)",
+    "scoring": "f1",
+    "space": {
+      "n_estimators": {
+        "randint": [
+          100,
+          500
+        ]
+      },
+      "max_depth": [
+        10,
+        20,
+        30,
+        null
+      ],
+      "min_samples_split": {
+        "randint": [
+          2,
+          10
+        ]
+      },
+      "min_samples_leaf": {
+        "randint": [
+          1,
+          4
+        ]
+      },
+      "max_features": [
+        "sqrt",
+        "log2"
+      ],
+      "class_weight": [
+        "balanced",
+        "balanced_subsample"
+      ]
+    },
+    "data": "training partition",
+    "search_frac": 1.0,
+    "n_rows": 40102,
+    "best_cv_score": 0.9824043755443255
+  },
+  "decision_rule": "Malicious iff P(Malicious) >= tau",
+  "threshold_choice": {
+    "rule": "0.5",
+    "val_f1_at_0.5": 0.9817210926268227,
+    "tuned_tau": 0.3706370498850917,
+    "val_f1_at_tuned": 0.9824489795918367,
+    "f1_gain": 0.0007278869650140241,
+    "min_gain": 0.005
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "class_names": [
+    "Normal",
+    "Botnet",
+    "Brute Force",
+    "DoS/DDoS",
+    "Infiltration",
+    "PortScan",
+    "Web Attack"
+  ],
+  "sklearn_version": "1.9.1",
+  "smoke": false
+}

@@ -1,0 +1,78 @@
+{
+  "model": "RandomForestClassifier",
+  "task": "multi",
+  "hyperparameters": {
+    "class_weight": "balanced_subsample",
+    "max_depth": null,
+    "max_features": "log2",
+    "min_samples_leaf": 1,
+    "min_samples_split": 3,
+    "n_estimators": 317
+  },
+  "search": {
+    "method": "RandomizedSearchCV",
+    "n_iter": 30,
+    "cv": "StratifiedKFold(5, shuffle=True, random_state=42)",
+    "scoring": "f1_macro",
+    "space": {
+      "n_estimators": {
+        "randint": [
+          100,
+          500
+        ]
+      },
+      "max_depth": [
+        10,
+        20,
+        30,
+        null
+      ],
+      "min_samples_split": {
+        "randint": [
+          2,
+          10
+        ]
+      },
+      "min_samples_leaf": {
+        "randint": [
+          1,
+          4
+        ]
+      },
+      "max_features": [
+        "sqrt",
+        "log2"
+      ],
+      "class_weight": [
+        "balanced",
+        "balanced_subsample"
+      ]
+    },
+    "data": "training partition",
+    "search_frac": 1.0,
+    "n_rows": 40102,
+    "best_cv_score": 0.9261350854601631
+  },
+  "decision_rule": "argmax of class probabilities",
+  "threshold_choice": {
+    "rule": "argmax"
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "class_names": [
+    "Normal",
+    "Botnet",
+    "Brute Force",
+    "DoS/DDoS",
+    "Infiltration",
+    "PortScan",
+    "Web Attack"
+  ],
+  "sklearn_version": "1.9.1",
+  "smoke": false
+}
