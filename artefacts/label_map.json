@@ -1,0 +1,34 @@
+{
+  "classes": [
+    "Normal",
+    "Botnet",
+    "Brute Force",
+    "DoS/DDoS",
+    "Infiltration",
+    "PortScan",
+    "Web Attack"
+  ],
+  "code_of": {
+    "Normal": 0,
+    "Botnet": 1,
+    "Brute Force": 2,
+    "DoS/DDoS": 3,
+    "Infiltration": 4,
+    "PortScan": 5,
+    "Web Attack": 6
+  },
+  "raw_to_class": {
+    "Normal": "Normal",
+    "Botnet ARES": "Botnet",
+    "Brute Force": "Brute Force",
+    "Dos/DDos": "DoS/DDoS",
+    "Infiltration": "Infiltration",
+    "PortScan": "PortScan",
+    "Web Attack": "Web Attack"
+  },
+  "binary": {
+    "Normal": 0,
+    "Malicious": 1
+  },
+  "binary_rule": "label_bin = 0 if label_7 == code_of['Normal'] else 1"
+}
