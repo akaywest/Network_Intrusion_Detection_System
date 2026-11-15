@@ -51,10 +51,12 @@ def run_info(con: sqlite3.Connection, run_id: int) -> dict | None:
 
 def run_records(con: sqlite3.Connection, run_id: int) -> pd.DataFrame:
     """One row per stored prediction of the run (t4 not null), with latency components,
-    the binary decision and the flow's protocol."""
+    the binary decision, the flow's protocol and its dataset label (true_label: ground
+    truth for the display only; the engine never sees it). true_label rides on the
+    FLOW_RECORD join that protocol already needs, so it adds no query."""
     df = pd.read_sql_query(
         "SELECT p.seq_no, p.is_warmup, p.predicted_label, p.t0_emit_ns, p.t4_store_ns, "
-        "v.t_tx_ms, v.t_pre_ms, v.t_inf_ms, v.t_ser_ms, v.L_ms, f.protocol "
+        "v.t_tx_ms, v.t_pre_ms, v.t_inf_ms, v.t_ser_ms, v.L_ms, f.protocol, f.true_label "
         "FROM prediction p JOIN v_latency v ON v.prediction_id = p.prediction_id "
         "JOIN flow_record f ON f.flow_id = p.flow_id "
         "WHERE p.run_id=? AND p.t4_store_ns IS NOT NULL ORDER BY p.seq_no",
@@ -105,6 +107,29 @@ def kpis(df: pd.DataFrame, alerts: int, warmup: int) -> dict:
         if span_s > 0:
             out["throughput_rps"] = len(post) / span_s     # Eq. 3.7
     return out
+
+
+def within_target(v: float | None, dt_ms: float) -> bool | None:
+    """Latency percentile against the emission interval: v <= Δt passes (the NFR1 form,
+    p95(L) <= Δt = 100 ms in S1). None while there is no value yet."""
+    return None if v is None else v <= dt_ms
+
+
+def detection_kpis(df: pd.DataFrame, warmup: int) -> dict:
+    """Running detection figures for the dashboard's second KPI row: predictions vs the
+    dataset label over post-warm-up records (same exclusion as the latency KPIs).
+    Binary view for every task: anything but Normal is malicious (FR10), so a
+    seven-class prediction of the wrong attack class still counts as a hit.
+    precision = TP / (TP + FP), recall = TP / (TP + FN), false_alarms = FP.
+    A live display aid only: the reported detection metrics come from the full test
+    partition offline (plan §8.1)."""
+    post = post_warmup(df, warmup)
+    pred = (post["predicted_label"] != "Normal").to_numpy()
+    true = (post["true_label"] != "Normal").to_numpy()
+    tp, fp, fn = int((pred & true).sum()), int((pred & ~true).sum()), int((~pred & true).sum())
+    return {"n": int(len(post)), "tp": tp, "fp": fp, "fn": fn, "false_alarms": fp,
+            "precision": tp / (tp + fp) if tp + fp else None,
+            "recall": tp / (tp + fn) if tp + fn else None}
 
 
 def traffic_per_second(df: pd.DataFrame, window_s: int = 60) -> pd.DataFrame:

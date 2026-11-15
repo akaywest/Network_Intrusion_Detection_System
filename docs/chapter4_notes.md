@@ -2,7 +2,7 @@
 
 A working list for the Chapter Four write-up: what the implementation added to the Chapter Three design, where it departs from it and why, and what has been found along the way. Append new entries as work goes on (see CLAUDE.md). Every figure has a source file in the repository, so the chapter can cite it.
 
-Last updated: 2026-11-15 (Phase 6 §8.2 run_matrix).
+Last updated: 2026-11-15 (Phase 6 §8.2 run_matrix; dashboard UI pass §2.15, §3.8).
 
 ## 1. Database fields added beyond Table 3.10
 
@@ -96,6 +96,15 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - **Resumable:** a run is skipped when MODEL_RUN holds it with `end_reason='complete'`, `rate_changes IS NULL`, PREDICTION count = n_records and the same dashboard state. A power cut leaves the run in progress with end_reason NULL, so only that run is repeated. A per-run log goes to `results/run_matrix_log.csv`.
 - Smoke runs use `--scenario-prefix` (e.g. `smoke-S1`) and `--n-override`, so they can never be counted as experiment runs.
 
+### 2.15 Dashboard UI pass (2026-11-15; Fig. 3.12 layout kept, nothing measured differently)
+- **Title** "Real-Time Network Intrusion Detection System" in the sidebar and the browser tab, subtitle "Machine learning · IDS2025 replay". Streamlit's Deploy button and main menu are hidden with CSS (this also removes the menu's theme switch; the OS theme still applies).
+- **KPI row:** p95 and p99 carry a status chip, green "✓ ≤ target Δt" or red "✗ > target Δt", in the NFR1 form p95(L) ≤ Δt (`queries.within_target`). Throughput shows "x% of 1000/Δt" in grey, with no pass/fail colour, because Eq. 3.7 at a steady 100 ms gives about 9.99 rec/s and any threshold would be invented. Burst runs say "burst load" (there is no single offered rate). The tooltips give the numbers.
+- **Detection KPI row (added beyond Table 3.8):** running precision, recall and false alarms (FP count), from PREDICTION vs FLOW_RECORD.true_label over post-warm-up records (the same first-100 exclusion as the latency KPIs). This is a binary view for every task: any non-Normal class counts as malicious, so a seven-class prediction of the wrong attack class still counts as a hit. It is a live display aid only. The reported detection metrics remain the offline full-test-partition figures (plan §8.1), and the caption says so.
+- **Alert table:** severity is shown as coloured chips (▲ High red, ● Medium orange). Rows with a malicious prediction but true class Normal are shaded and labelled "✗ False positive" in a Check column, so the cue is never colour alone.
+- **Charts:** latency components are a stacked horizontal bar in pipeline order t_tx, t_pre, t_inf, t_ser with the total at its end. The latency chart has a log-scale toggle, a bold dashed Δt line and a dotted p95 line, coloured green or red against Δt and labelled. Live traffic is a stacked area (benign bottom, malicious top). The protocol mix uses one neutral grey, so blue and orange only ever mean benign and malicious.
+- **Sidebar:** grouped into "Run settings" and "Actions". The records/s equivalent (1000/Δt) is shown under the Δt slider. While a run is active, model, task, seed, load and Start are locked. **The Δt slider stays live in steady runs**, because FR2 requires Δt to be configurable "before and during a run" (the change is demo-only and marks the run, §2.11). It locks in burst runs, where the streamer rejects set_rate. The sidebar status fragment triggers one full-app rerun when a run starts or ends, so the lock follows runs started elsewhere and runs that end on their own.
+- **Cost:** refresh is still 1 s, and the queries are the same five per refresh. `true_label` rides on the FLOW_RECORD join that `protocol` already used. The new figures are pandas arithmetic on the frame already loaded.
+
 ## 3. Findings so far
 
 ### 3.1 Isolation Forest has a ~40% false-positive rate
@@ -130,3 +139,9 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - Plan §8.2 gives S3 as "~35 min in total". The schedule alone is 15 × (250 + 100 + 25 + 5) s ≈ 95 min, and at Δt = 5 and 1 ms the run is limited by the engine's service time rather than the schedule (RF ≈ 40 ms/record → ~3.4 min per 5,000 records). Estimated S3 total: **~2h36m** (`run_matrix.py --dry-run`, using the `results/detector_timing.json` means + 3 ms per record).
 - Estimated totals: main set 105 runs, 5h38m of runs + 35 min of pauses ≈ **6h13m**. Closed set 15 runs ≈ **2h11m**. Overall ≈ **8h24m**.
 - 2-run smoke test (200 records, Δt = 100 ms, IF and RF): 23.5 s and 21.5 s against estimates of 22.9 s and 24.9 s, both complete and nothing malformed, with pacing lateness p99 of 1.8 and 0.6 ms.
+
+### 3.8 Dashboard UI pass: before/after p95 is inconclusive (2026-11-15)
+- Method: a separate stack (ports 9200–9202, dashboard 8502, its own `db/ui_ab.db`, so `db/nids.db` was untouched), dashboard open in headless Chrome at 1 s, RF binary, seed 42, Δt = 100 ms, steady, 5,000 records, scenario `ui_before` / `ui_after`. Driver scripts were kept outside the repository.
+- **Before** (old UI, run 1 in ui_ab.db): L p50 63.2 ms, **p95 184.5 ms**, p99 1,916 ms, max 2,221 ms; 11.9% of records over 100 ms. Mean components: t_tx 45.4, t_pre 0.20, t_inf 63.2, t_ser 1.2 ms. Dashboard delay median 272 ms (475 refreshes). The 5-minute load average was 3.5–4.6 on 4 threads, so the machine was already busy. Compare the RF run 1 in `db/nids.db` (old UI, Brave): p95 116.9 ms, t_inf ≈ 42 ms.
+- **After** (new UI, run 2 in ui_ab.db): **invalid**. A second NIDS stack (`run.py` on 9100/8501, dashboard in Brave) was started during it and ran an Isolation Forest run (db/nids.db run 2, 05:02–05:10 UTC), and VS Code restarted. Load average reached 9.9–11. Mean t_inf doubled to 126 ms, the backlog grew, and L reached ~160 s (p95 157,730 ms). This measures the contention, not the UI. The overlap works both ways: **db/nids.db run 2 (IF) ran while this RF run loaded the CPU**, so it should not be used as an experiment run.
+- Conclusion: **no valid evidence either way** about whether p95 changed. The query load is unchanged (above), so a difference would have to come from rendering (Styler, two more metric rows, chip column). To settle it, repeat the pair back to back on a quiet machine (one stack, no other browser on the dashboard), ideally two or three pairs given the run-to-run spread seen here (p95 116.9 vs 184.5 ms on the same old UI).
