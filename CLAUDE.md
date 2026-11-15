@@ -22,3 +22,4 @@ Dataset: IDS2025 (Mendeley Data). Python 3.12.3 (Ubuntu) in a project venv at .v
 ## Working style
 - Explain what you are about to change before large edits; keep modules matching Table 3.9 (M1–M8).
 - Write pytest tests alongside each module (see plan Section 9).
+- Whenever you add a field, change the design, or find something reportable, append it to docs/chapter4_notes.md.

@@ -130,12 +130,14 @@ def test_detector_matches_offline(model, task, request):
 
 # ---------------------------------------------------------------- timing (fresh process)
 @pytest.mark.skipif(not all(_have(m, t) for m, t in det.TIMED), reason="artefacts missing")
-def test_single_record_timing():
-    r = subprocess.run([sys.executable, "-m", "nids.engine.detectors", "--time"],
+def test_single_record_timing(tmp_path):
+    out = tmp_path / "detector_timing.json"  # never overwrite results/ from a test
+    r = subprocess.run([sys.executable, "-m", "nids.engine.detectors", "--time",
+                        "--out", str(out)],
                        capture_output=True, text=True, cwd=ROOT, timeout=900)
     assert r.returncode == 0, r.stderr[-3000:]
     print(r.stdout)
-    rep = json.loads((ROOT / "results" / "detector_timing.json").read_text())
+    rep = json.loads(out.read_text())
     assert rep["n_calls"] == 1000 and set(rep["detectors"]) == {"iforest", "rf", "lstm"}
     assert all(v == "1" for v in rep["env"].values())
     assert rep["detectors"]["lstm"]["tf_threads"] == [1, 1]

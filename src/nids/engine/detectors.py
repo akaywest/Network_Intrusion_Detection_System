@@ -26,7 +26,8 @@ threads are set to 1 when the LSTM loads, and the sklearn models use n_jobs=1.
 
 Models load only from artefacts/ (NFR6): Detector._path refuses any other location.
 
-Timing:  python -m nids.engine.detectors --time   (writes results/detector_timing.json)
+Timing:  python -m nids.engine.detectors --time [--out PATH]
+         (default results/detector_timing.json; the tests write to a temporary file)
 """
 from __future__ import annotations
 
@@ -240,7 +241,8 @@ class LSTMDetector(Detector):
 TIMED = (("iforest", "binary"), ("rf", "binary"), ("lstm", "binary"))
 
 
-def time_detectors(n: int = 1000, warmup: int = 50, seed: int = 42) -> dict:
+def time_detectors(n: int = 1000, warmup: int = 50, seed: int = 42,
+                   out: str | Path | None = None) -> dict:
     """Time n single predict() calls per detector on preprocessed test rows (one thread)."""
     import time
 
@@ -277,7 +279,7 @@ def time_detectors(n: int = 1000, warmup: int = 50, seed: int = 42) -> dict:
         if name == "lstm":
             r["tf_threads"] = list(d.threads)
         report["detectors"][name] = r
-    out = ROOT / "results" / "detector_timing.json"
+    out = Path(out) if out is not None else ROOT / "results" / "detector_timing.json"
     out.write_text(json.dumps(report, indent=2))
     return report
 
@@ -287,11 +289,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Detector single-record timing (plan §6.1)")
     ap.add_argument("--time", action="store_true", help="time 1,000 predict() calls each")
     ap.add_argument("-n", type=int, default=1000)
+    ap.add_argument("--out", default=None,
+                    help="report path (default results/detector_timing.json)")
     a = ap.parse_args()
     if not a.time:
         ap.print_help()
         return
-    rep = time_detectors(n=a.n)
+    rep = time_detectors(n=a.n, out=a.out)
     print(f"{'detector':10s} {'task':7s} {'median ms':>10s} {'p95 ms':>8s} {'p99 ms':>8s}")
     for name, r in rep["detectors"].items():
         print(f"{name:10s} {r['task']:7s} {r['median_ms']:10.3f} {r['p95_ms']:8.3f} "
