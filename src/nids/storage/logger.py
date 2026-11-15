@@ -69,10 +69,19 @@ class LatencyLogger:
              utc_now_iso()))
         return int(cur.lastrowid)
 
-    def finish_run(self, run_id: int, malformed_count: int) -> None:
+    def finish_run(self, run_id: int, malformed_count: int, end_reason: str | None = None,
+                   rate_changes: list[dict] | None = None) -> None:
+        """Flush the last t4, then close the MODEL_RUN row (plan §7.1 step 3).
+
+        rate_changes stays NULL unless a demo set_rate happened during the run, so
+        experiment runs are those with rate_changes IS NULL.
+        """
         self.flush()
-        self.con.execute("UPDATE model_run SET malformed_count=?, ended_at=? WHERE run_id=?",
-                         (malformed_count, utc_now_iso(), run_id))
+        self.con.execute(
+            "UPDATE model_run SET malformed_count=?, ended_at=?, end_reason=?, "
+            "rate_changes=? WHERE run_id=?",
+            (malformed_count, utc_now_iso(), end_reason,
+             json.dumps(rate_changes) if rate_changes else None, run_id))
 
     # ---- per-record write (process 2.5) ------------------------------------------
     def log(self, run_id: int, seq_no: int, flow_id: int, res,

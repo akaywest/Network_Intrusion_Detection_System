@@ -25,7 +25,7 @@ import yaml
 from nids.prep.convert_xlsx import ROOT
 from nids.prep.prepare_data import DISPLAY_COLS
 from nids.storage import environment
-from nids.storage.db import SCHEMA_PATH, connect
+from nids.storage.db import SCHEMA_PATH, connect, ensure_additions
 
 # IANA protocol numbers -> FLOW_RECORD.protocol (Table 3.10; dashboard protocol mix, FR13).
 # IDS2025's test partition holds 6, 17 and 0 (HOPOPT / unset); anything else is "Other".
@@ -98,6 +98,7 @@ def init_db(db_path: Path, test_raw_path: Path, label_map_path: Path,
     classes = json.loads(Path(label_map_path).read_text())["classes"]
     con = connect(db_path)
     try:
+        ensure_additions(con)  # older databases: Phase 5 MODEL_RUN columns
         n_existing = con.execute("SELECT COUNT(*) FROM flow_record").fetchone()[0]
         if n_existing == 0:
             loaded = load_flow_records(con, test_raw, classes)

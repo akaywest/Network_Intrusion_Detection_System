@@ -28,3 +28,23 @@ def connect(db_path: str | Path, *, autocommit: bool = False) -> sqlite3.Connect
     con.execute("PRAGMA foreign_keys = ON")
     con.execute("PRAGMA synchronous = NORMAL")
     return con
+
+
+def ensure_additions(con: sqlite3.Connection) -> list[str]:
+    """Add the Phase 5 MODEL_RUN columns to a database created before them (plan §7.1).
+
+    New databases get them from schema.sql. The ALTER statements are literal strings
+    (NFR6); a column already present is left alone. Returns the columns added.
+    """
+    have = {r[1] for r in con.execute("PRAGMA table_info(model_run)")}
+    added = []
+    if "rate_changes" not in have:
+        con.execute("ALTER TABLE model_run ADD COLUMN rate_changes TEXT")
+        added.append("rate_changes")
+    if "end_reason" not in have:
+        con.execute("ALTER TABLE model_run ADD COLUMN end_reason TEXT CHECK (end_reason IN "
+                    "('complete','stopped','disconnected','cancelled','shutdown'))")
+        added.append("end_reason")
+    if added:
+        con.commit()
+    return added

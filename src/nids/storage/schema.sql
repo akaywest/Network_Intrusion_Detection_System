@@ -20,7 +20,13 @@ CREATE TABLE model_run (
     hyperparameters TEXT, random_seed INTEGER, emission_interval_ms REAL,
     load_condition TEXT CHECK (load_condition IN ('steady','burst')),
     scenario TEXT, n_records INTEGER, malformed_count INTEGER DEFAULT 0, -- added
-    started_at TEXT, ended_at TEXT);
+    started_at TEXT, ended_at TEXT,
+    -- added (Phase 5, plan §7.1): NULL = dt fixed for the whole run (valid experiment
+    -- run); otherwise a JSON list of demo set_rate changes [{from_seq, dt_ms, at}].
+    rate_changes TEXT,
+    -- added: how the run ended (eos after n records, stop command, lost stream, ...)
+    end_reason TEXT CHECK (end_reason IN
+        ('complete','stopped','disconnected','cancelled','shutdown')));
 
 CREATE TABLE flow_record (
     flow_id INTEGER PRIMARY KEY, row_index INTEGER NOT NULL UNIQUE,

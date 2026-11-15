@@ -1,10 +1,10 @@
 """Tests for the streamer (M3, plan §6.2) and inference engine (M4, plan §6.3).
 
-Unit tests cover sampling, the schedule, pacing and framing. Integration tests (IT1)
-run the engine and streamer as separate processes against a temporary database built
-by init_db (db/nids.db is never touched):
-  - 200 records end to end for each model: PREDICTION count = sent - malformed, no
-    negative interval in v_latency (plan §6.3 "Done when");
+Unit tests cover sampling, the schedule, pacing and framing. Integration tests drive
+the engine and streamer services (tests/conftest.py `services`: separate processes,
+temporary database built by init_db; db/nids.db is never touched) through the control
+channel (plan §7.1):
+  - 200 records end to end for each model (IT1): see tests/test_control.py;
   - broken lines increase malformed_count and do not stop the engine (FR5);
   - clock check: 1,000 records at 100 ms; every t_tx > 0 and median t_tx < 1 ms (§3.3.6);
   - every run records socket buffers and wal_autocheckpoint in run_conditions.
@@ -13,8 +13,6 @@ The two slow ones are marked `slow` (deselect with -m "not slow").
 import json
 import socket
 import sqlite3
-import subprocess
-import sys
 import time
 
 import numpy as np
@@ -22,15 +20,12 @@ import pandas as pd
 import pytest
 
 from nids.prep.convert_xlsx import ROOT
-from nids.storage.init_db import init_db
 from nids.stream import netconf
 from nids.stream import streamer as st
 
-ART = ROOT / "artefacts"
-TEST_RAW = ROOT / "data" / "processed" / "test_raw.parquet"
-LABEL_MAP = ART / "label_map.json"
+from tests.conftest import ART, HAVE_DATA, TEST_RAW
+
 FEATURES = json.loads((ART / "feature_list.json").read_text())
-HAVE_DATA = TEST_RAW.exists() and (ART / "rf_binary_seed42.joblib").exists()
 needs_data = pytest.mark.skipif(not HAVE_DATA, reason="test partition / artefacts missing")
 COMPONENTS = ("t_tx_ms", "t_pre_ms", "t_inf_ms", "t_ser_ms", "L_ms")
 
@@ -105,43 +100,18 @@ def test_streamer_refuses_non_loopback():
 
 
 # ---------------------------------------------------------------- integration helpers
-@pytest.fixture(scope="module")
-def db(tmp_path_factory):
-    path = tmp_path_factory.mktemp("pipe") / "nids.db"
-    init_db(path, TEST_RAW, LABEL_MAP)
-    return path
-
-
-def start_engine(db, model, task="binary", dt_ms=100, mode="steady", n=200, scenario="IT1"):
-    p = subprocess.Popen([sys.executable, "-m", "nids.engine.engine", "--model", model,
-                          "--task", task, "--seed", "42", "--dt-ms", str(dt_ms),
-                          "--mode", mode, "--scenario", scenario, "--n", str(n),
-                          "--port", "0", "--db", str(db)],
-                         cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    for line in p.stdout:
-        if line.startswith("{"):
-            ev = json.loads(line)
-            if ev.get("event") == "ready":
-                return p, ev
-    raise RuntimeError(f"engine did not start:\n{p.stderr.read()[-3000:]}")
-
-
-def finish_engine(p, timeout=120):
-    out, err = p.communicate(timeout=timeout)
-    assert p.returncode == 0, err[-3000:]
-    return json.loads([ln for ln in out.splitlines() if ln.startswith("{")][-1])
-
-
-def run_pipeline(db, model, task="binary", n=200, dt_ms=100, mode="steady"):
-    eng, ready = start_engine(db, model, task, dt_ms, mode, n)
-    s = subprocess.run([sys.executable, "-m", "nids.stream.streamer", "--n", str(n),
-                        "--dt-ms", str(dt_ms), "--mode", mode, "--port", str(ready["port"])],
-                       cwd=ROOT, capture_output=True, text=True, timeout=n * dt_ms / 1000 + 300)
-    assert s.returncode == 0, s.stderr[-3000:]
-    sent = json.loads(s.stdout.strip().splitlines()[-1])
-    low = sent["sndbuf_granted"] < netconf.SEND_BUFFER
-    assert sent["sndbuf_warning"] == low and ("WARNING: send buffer" in s.stderr) == low
-    return ready["run_id"], sent, finish_engine(eng)
+def run_pipeline(svc, model, task="binary", n=200, dt_ms=100, mode="steady",
+                 scenario="IT1"):
+    """prepare -> start -> eos through the control channel; returns (run_id, sent, done)."""
+    c = svc.client
+    run_id = c.prepare(model, task, 42, dt_ms, mode, scenario, n)
+    started = c.start(run_id, dt_ms, mode, n, sample_seed=42)
+    low = started["sndbuf_granted"] < netconf.SEND_BUFFER
+    assert started["sndbuf_warning"] == low
+    done = c.wait_done(run_id, timeout=n * dt_ms / 1000 + 300)
+    sent = c.streamer("status")["last_run"]
+    assert sent["run_id"] == run_id
+    return run_id, sent, done
 
 
 def ro(db):
@@ -174,8 +144,8 @@ def run_stats(db, run_id):
                              (run_id,)).fetchone()[0]
         mr = con.execute("SELECT model_name, task, random_seed, emission_interval_ms, "
                          "load_condition, scenario, n_records, malformed_count, env_id, "
-                         "hyperparameters, ended_at FROM model_run WHERE run_id=?",
-                         (run_id,)).fetchone()
+                         "hyperparameters, ended_at, end_reason, rate_changes "
+                         "FROM model_run WHERE run_id=?", (run_id,)).fetchone()
         lat = pd.read_sql_query("SELECT * FROM v_latency WHERE run_id=? ORDER BY seq_no",
                                 con, params=(run_id,))
         null_t4 = con.execute("SELECT COUNT(*) FROM prediction WHERE run_id=? AND "
@@ -185,30 +155,10 @@ def run_stats(db, run_id):
     return n_pred, mr, lat, null_t4
 
 
-# ---------------------------------------------------------------- IT1: 200 records each
-@needs_data
-@pytest.mark.slow
-@pytest.mark.parametrize("model", ["iforest", "rf", "lstm"])
-def test_end_to_end_200(db, model):
-    run_id, sent, done = run_pipeline(db, model)
-    n_pred, mr, lat, null_t4 = run_stats(db, run_id)
-    assert sent["n_sent"] == 200 and done["eos"]
-    assert n_pred == sent["n_sent"] - mr[7] == done["processed"]
-    assert mr[:8] == (model, "binary", 42, 100.0, "steady", "IT1", 200, 0)
-    assert mr[8] is not None and json.loads(mr[9])["config"] and mr[10]
-    assert null_t4 == 0 and len(lat) == 200                         # flush wrote last t4
-    check_run_conditions(db, run_id)
-    assert (lat[list(COMPONENTS)] >= 0).all().all()                  # no negative interval
-    med = lat[lat.seq_no >= 100][list(COMPONENTS)].median()          # Table 3.13 warm-up
-    print(f"\n{model}: sent={sent['n_sent']} predictions={n_pred} malformed={mr[7]} "
-          f"pacing_late_median={sent['lateness_ms']['median']:.3f}ms  medians(ms, seq>=100): "
-          + " ".join(f"{c}={med[c]:.3f}" for c in COMPONENTS))
-
-
 # ---------------------------------------------------------------- FR5: malformed lines
 @needs_data
-def test_malformed_lines_counted_engine_continues(db, test_raw):
-    eng, ready = start_engine(db, "iforest", n=43, scenario="FR5")
+def test_malformed_lines_counted_engine_continues(services, test_raw):
+    run_id = services.client.prepare("iforest", "binary", 42, 100, "steady", "FR5", 45)
     rows = test_raw.head(40)
     good = [st.encode(i, int(r), [float(v) for v in vals]) for i, (r, vals) in
             enumerate(zip(rows["row_index"], rows[FEATURES].to_numpy()))]
@@ -220,17 +170,18 @@ def test_malformed_lines_counted_engine_continues(db, test_raw):
            json.dumps({"seq": 97, "row_index": 10**9, "features": [0.0] * len(FEATURES),
                        "t0": 1}).encode() + b"\n",                           # unknown flow
            b"[1, 2, 3]\n"]                                                   # not an object
-    with socket.create_connection(("127.0.0.1", ready["port"])) as s:
+    with socket.create_connection(("127.0.0.1", services.data_port)) as s:
         s.sendall(b"".join(good[:20]) + b"".join(bad) + b"".join(good[20:]) + st.EOS)
         s.shutdown(socket.SHUT_WR)
         s.recv(1)
-    done = finish_engine(eng)
-    n_pred, mr, lat, _ = run_stats(db, ready["run_id"])
-    assert done == {"event": "done", "run_id": ready["run_id"], "processed": 40,
-                    "malformed": 5, "eos": True}
-    assert n_pred == 40 and mr[7] == 5 and mr[10]
-    rc = check_run_conditions(db, ready["run_id"])
-    print(f"\nrun_conditions: " + json.dumps({k: rc[k] for k in sorted(rc)
+    done = services.client.wait_done(run_id, timeout=60)
+    n_pred, mr, lat, _ = run_stats(services.db, run_id)
+    assert done == {"run_id": run_id, "processed": 40, "malformed": 5, "eos": True,
+                    "end_reason": "complete", "rate_changes": None}
+    assert n_pred == 40 and mr[7] == 5 and mr[10] and mr[11] == "complete"
+    assert services.client.engine("status")["state"] == "idle"        # still serving
+    rc = check_run_conditions(services.db, run_id)
+    print("\nrun_conditions: " + json.dumps({k: rc[k] for k in sorted(rc)
                                              if k.startswith(("so_", "net_", "sqlite_"))}))
     print(f"\nFR5: sent 45 lines (5 broken) -> predictions={n_pred} malformed_count={mr[7]}")
 
@@ -238,9 +189,10 @@ def test_malformed_lines_counted_engine_continues(db, test_raw):
 # ---------------------------------------------------------------- clock check (§3.3.6)
 @needs_data
 @pytest.mark.slow
-def test_clock_check_1000_at_100ms(db):
-    run_id, sent, done = run_pipeline(db, "iforest", n=1000, dt_ms=100)
-    n_pred, mr, lat, _ = run_stats(db, run_id)
+def test_clock_check_1000_at_100ms(services):
+    run_id, sent, done = run_pipeline(services, "iforest", n=1000, dt_ms=100,
+                                      scenario="clock")
+    n_pred, mr, lat, _ = run_stats(services.db, run_id)
     assert n_pred == 1000 and mr[7] == 0
     tx = lat["t_tx_ms"]
     print(f"\nclock check (1,000 @ 100 ms, iforest): t_tx min={tx.min():.4f} "
