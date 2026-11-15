@@ -1,0 +1,46 @@
+{
+  "n_calls": 1000,
+  "warmup_calls": 50,
+  "seed": 42,
+  "source": "test partition rows (timing only, nothing tuned)",
+  "env": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "TF_NUM_INTRAOP_THREADS": "1",
+    "TF_NUM_INTEROP_THREADS": "1"
+  },
+  "blas_threads": [
+    1
+  ],
+  "detectors": {
+    "iforest": {
+      "task": "binary",
+      "median_ms": 10.659892,
+      "p95_ms": 17.6769603,
+      "p99_ms": 30.035933029999995,
+      "mean_ms": 11.777342781,
+      "max_ms": 57.744407
+    },
+    "rf": {
+      "task": "binary",
+      "median_ms": 35.338177,
+      "p95_ms": 48.294504499999974,
+      "p99_ms": 61.77212271999998,
+      "mean_ms": 37.15175217,
+      "max_ms": 89.577013
+    },
+    "lstm": {
+      "task": "binary",
+      "median_ms": 5.90678,
+      "p95_ms": 9.856302600000001,
+      "p99_ms": 12.957817399999998,
+      "mean_ms": 6.477115646000001,
+      "max_ms": 44.116909,
+      "tf_threads": [
+        1,
+        1
+      ]
+    }
+  }
+}
