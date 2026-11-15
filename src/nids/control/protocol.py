@@ -6,7 +6,8 @@ always carries "ok". Commands never travel on the data path (port 9100), so they
 nothing to L (§3.3.1).
 
   engine    prepare   {"cmd":"prepare","model":"rf","task":"binary","seed":42,"dt_ms":100,
-                       "mode":"steady","scenario":"S1","n":5000}  -> {"ok":true,"run_id":17}
+                       "mode":"steady","scenario":"S1","n":5000[,"dashboard_open":true]}
+                      -> {"ok":true,"run_id":17}
             stop      cancel a prepared run, or end a running one if the stream is lost
             set_rate  {"cmd":"set_rate","dt_ms":20,"from_seq":k}  record a demo rate change
             status    state, active run, counters, last finished run
@@ -64,6 +65,12 @@ def _choice(v, name, options):
     return v
 
 
+def _bool(v, name):
+    if v is not None and not isinstance(v, bool):
+        raise ProtocolError(f"{name} must be true, false or null")
+    return v
+
+
 def _str(v, name, optional=False):
     if v is None and optional:
         return None
@@ -82,6 +89,9 @@ SCHEMAS: dict[str, dict[str, tuple[Callable, bool]]] = {
         "mode": (lambda v: _choice(v, "mode", MODES), False),
         "scenario": (lambda v: _str(v, "scenario", optional=True), False),
         "n": (lambda v: None if v is None else _int(v, "n", 1), False),
+        # declared by the caller, recorded in run_conditions (§3.3.7: the design runs
+        # with the dashboard open; the dashboard-closed S1 set is the comparison)
+        "dashboard_open": (lambda v: _bool(v, "dashboard_open"), False),
     },
     "start": {
         "run_id": (lambda v: _int(v, "run_id", 1), True),

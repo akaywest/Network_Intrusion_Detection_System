@@ -86,9 +86,14 @@ class ControlClient:
     # ---- run lifecycle (plan §7.1) -------------------------------------------------
     def prepare(self, model: str, task: str = "binary", seed: int = 42,
                 dt_ms: float = 100.0, mode: str = "steady", scenario: str | None = None,
-                n: int | None = None) -> int:
-        r = self.engine("prepare", timeout=PREPARE_TIMEOUT_S, model=model, task=task,
-                        seed=seed, dt_ms=dt_ms, mode=mode, scenario=scenario, n=n)
+                n: int | None = None, dashboard_open: bool | None = None) -> int:
+        """dashboard_open is recorded in TEST_ENVIRONMENT.run_conditions (None = not
+        declared); the dashboard sends True, run_matrix sends its --dashboard-open."""
+        fields = dict(model=model, task=task, seed=seed, dt_ms=dt_ms, mode=mode,
+                      scenario=scenario, n=n)
+        if dashboard_open is not None:
+            fields["dashboard_open"] = dashboard_open
+        r = self.engine("prepare", timeout=PREPARE_TIMEOUT_S, **fields)
         return int(_check(r, "prepare")["run_id"])
 
     def start(self, run_id: int, dt_ms: float, mode: str = "steady", n: int = 5000,

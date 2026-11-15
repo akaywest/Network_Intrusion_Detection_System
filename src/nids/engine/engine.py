@@ -220,7 +220,7 @@ class Engine:
             run = self.active
             state = run.state if run else ("preparing" if self.preparing else "idle")
             return {"ok": True, "service": "engine", "pid": os.getpid(), "state": state,
-                    "data_port": self.data_port, "run": run.describe() if run else None,
+                    "data_port": self.data_port, "db": str(self.db_path.resolve()), "run": run.describe() if run else None,
                     "last_run": self.last_run}
 
     def stop(self, reason: str | None = None) -> dict:
@@ -301,8 +301,9 @@ class Engine:
                                       high_confidence=self.high_confidence)
         det.load(seed, task)
         det.reset_state()
-        env_id = ensure_env(self.db_path, {"dashboard_refresh_s":
-                                           self.cfg["dashboard"]["refresh_s"]})
+        env_id = ensure_env(self.db_path, {
+            "dashboard_refresh_s": self.cfg["dashboard"]["refresh_s"],
+            "dashboard_open": cmd.get("dashboard_open")})  # None = not declared
         self._drain_backlog()
         mode, scenario, n = cmd.get("mode", "steady"), cmd.get("scenario"), cmd.get("n")
         run_id = self.logger.start_run(env_id, cmd["model"], task, hyperparameters(det),

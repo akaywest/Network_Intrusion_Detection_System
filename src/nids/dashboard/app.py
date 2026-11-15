@@ -106,7 +106,7 @@ def on_start() -> None:
     task = s["task"] if s["model"] != "iforest" else "binary"
     try:
         run_id = client().prepare(s["model"], task, int(s["seed"]), float(s["dt_ms"]),
-                                  mode, "dashboard", n)
+                                  mode, "dashboard", n, dashboard_open=True)
         try:
             client().start(run_id, float(s["dt_ms"]), mode, n,
                            CFG["stream"]["sample_seed"])

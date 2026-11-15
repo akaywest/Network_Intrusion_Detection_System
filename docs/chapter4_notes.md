@@ -2,7 +2,7 @@
 
 A working list for the Chapter Four write-up: what the implementation added to the Chapter Three design, where it departs from it and why, and what has been found along the way. Append new entries as work goes on (see CLAUDE.md). Every figure has a source file in the repository, so the chapter can cite it.
 
-Last updated: 2026-11-15 (Phase 5 §7.2 dashboard).
+Last updated: 2026-11-15 (Phase 6 §8.2 run_matrix).
 
 ## 1. Database fields added beyond Table 3.10
 
@@ -20,6 +20,8 @@ Plan §1.1 item 3 allows these as "additions made during implementation". Schema
 | TEST_ENVIRONMENT | `run_conditions` | JSON with power profile, CPU governor, AC power, inference threads, SQLite journal mode and synchronous level, wal_autocheckpoint, effective socket buffers, net.core.{w,r}mem_max and dashboard refresh. Table 3.14 says run conditions are recorded but gave no field. |
 | MODEL_RUN | `rate_changes` | NULL when Δt stayed fixed for the whole run. Otherwise a JSON list of demo `set_rate` changes `[{from_seq, dt_ms, at}]`. Experiment runs are exactly those `WHERE rate_changes IS NULL` (plan §7.1: set_rate is demo-only). |
 | MODEL_RUN | `end_reason` | How the run ended: `complete` (eos after n records), `stopped` (stop command), `disconnected` (stream lost), `cancelled` (prepared, never started), `shutdown`. Separates complete experiment runs from interrupted ones. |
+
+| TEST_ENVIRONMENT | `run_conditions.dashboard_open` | `true`/`false` as declared by the caller of `prepare` (the dashboard sends `true`; run_matrix sends its `--dashboard-open`); `null` = not declared. Separates the main S1–S4 runs (dashboard open, §3.3.7) from the dashboard-closed S1 comparison set. |
 
 Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ensure_additions` (ALTER TABLE, run when the engine or init_db opens the database).
 
@@ -85,6 +87,15 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 ### 2.13 Isolation Forest score sign (plan §1.1 item 4)
 - s = −score_samples(x), because scikit-learn returns the negative of the score in Eq. 3.3.
 
+### 2.14 Test-matrix driver (plan §8.2, `experiments/run_matrix.py`)
+- Headless, through the same control-channel calls as the dashboard (`ControlClient.prepare → start → wait for eos`). Binary models only.
+- **Order:** repetition r uses model seed 42+r. Inside a repetition, the scenario steps run in order (S1; S2; S3 at 50/20/5/1 ms; S4), and each step runs IF, RF, LSTM interleaved. The record sample is the same for every run (`stream.sample_seed` = 42). There is a 20 s pause between runs.
+- **Two sets**, because the dashboard state can't change mid-matrix: `main` = S1–S4 with the dashboard open (105 runs), and `closed` = S1 with the dashboard closed (15 runs). Both use scenario label `S1` and are told apart by `run_conditions.dashboard_open`.
+- **Refuses to start** if net.core.wmem_max/rmem_max or the probed SO_SNDBUF is below 4 MB (§2.10), if `--dashboard-open` doesn't match whether the dashboard answers on 127.0.0.1:8501, if the services are busy, or if the engine writes a different database. If any streamer start reports a short send buffer, the matrix stops.
+- **Dashboard really open:** a dashboard-open run counts only if `results/dashboard_delay.csv` has rows for it, i.e. a browser refreshed during the run. Otherwise the matrix stops.
+- **Resumable:** a run is skipped when MODEL_RUN holds it with `end_reason='complete'`, `rate_changes IS NULL`, PREDICTION count = n_records and the same dashboard state. A power cut leaves the run in progress with end_reason NULL, so only that run is repeated. A per-run log goes to `results/run_matrix_log.csv`.
+- Smoke runs use `--scenario-prefix` (e.g. `smoke-S1`) and `--n-override`, so they can never be counted as experiment runs.
+
 ## 3. Findings so far
 
 ### 3.1 Isolation Forest has a ~40% false-positive rate
@@ -114,3 +125,8 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - In the same run (records 100–1,870): L p50 37.6 ms, **p95 102.7 ms, p99 484 ms**, throughput 10.0 rec/s. Mean components: t_tx 10.8, t_pre 0.18, t_inf 42.3, t_ser 2.2 ms. L spiked to ~1,000 ms several times.
 - The large mean t_tx is queueing: a record waits in the socket while the engine is still busy with an earlier one (RF ≈ 40 ms per record), so spikes propagate.
 - To separate the causes in S1: compare runs with the dashboard closed vs open (the design requires it open, §3.3.7), and line up spikes with WAL checkpoints (§3.3). If p95 > 100 ms holds in S1, NFR1 fails for RF under dashboard load. Report that as a finding.
+
+### 3.7 Test-matrix wall time is longer than plan §8.2 says
+- Plan §8.2 gives S3 as "~35 min in total". The schedule alone is 15 × (250 + 100 + 25 + 5) s ≈ 95 min, and at Δt = 5 and 1 ms the run is limited by the engine's service time rather than the schedule (RF ≈ 40 ms/record → ~3.4 min per 5,000 records). Estimated S3 total: **~2h36m** (`run_matrix.py --dry-run`, using the `results/detector_timing.json` means + 3 ms per record).
+- Estimated totals: main set 105 runs, 5h38m of runs + 35 min of pauses ≈ **6h13m**. Closed set 15 runs ≈ **2h11m**. Overall ≈ **8h24m**.
+- 2-run smoke test (200 records, Δt = 100 ms, IF and RF): 23.5 s and 21.5 s against estimates of 22.9 s and 24.9 s, both complete and nothing malformed, with pacing lateness p99 of 1.8 and 0.6 ms.
