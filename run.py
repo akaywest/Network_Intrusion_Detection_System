@@ -4,7 +4,9 @@
   2. starts the inference engine and the streamer as background services
      (python -m nids.engine.engine / nids.stream.streamer), each in its own session so
      Ctrl+C reaches only this launcher, and waits until both answer "status"
-  3. runs `streamlit run src/nids/dashboard/app.py` bound to 127.0.0.1 (NFR6)
+  3. runs `streamlit run src/nids/dashboard/app.py` bound to 127.0.0.1 (NFR6), headless
+     (so Streamlit's first-run e-mail prompt never blocks the launch), and opens the
+     browser itself once the dashboard answers its health check
   4. on Ctrl+C (or when the dashboard exits): stops any active run through the control
      channel (eos, t4 flushed, ended_at set), then stops the dashboard, the streamer and
      the engine in that order, escalating to kill only if one does not exit in time.
@@ -24,6 +26,8 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.request
+import webbrowser
 from pathlib import Path
 
 import yaml
@@ -96,6 +100,9 @@ def _sigterm(*_):
 
 def main(argv: list[str] | None = None) -> int:
     signal.signal(signal.SIGTERM, _sigterm)
+    # Ctrl+C -> KeyboardInterrupt even if SIGINT was inherited as ignored (e.g. when
+    # launched as a background job from a script)
+    signal.signal(signal.SIGINT, signal.default_int_handler)
     cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
     net = cfg["network"]
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -105,6 +112,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--engine-ctl-port", type=int, default=net["engine_ctl_port"])
     ap.add_argument("--streamer-ctl-port", type=int, default=net["streamer_ctl_port"])
     ap.add_argument("--dashboard-port", type=int, default=8501)
+    ap.add_argument("--no-browser", action="store_true",
+                    help="do not open a browser tab for the dashboard")
     a = ap.parse_args(argv)
 
     db = Path(a.db).resolve()
@@ -146,10 +155,14 @@ def main(argv: list[str] | None = None) -> int:
                 [py, "-m", "streamlit", "run", str(APP),
                  "--server.address", "127.0.0.1",          # loopback only (NFR6)
                  "--server.port", str(a.dashboard_port),
+                 "--server.headless", "true",
                  "--browser.gatherUsageStats", "false"],
-                cwd=ROOT, env=dash_env, start_new_session=True)
-            print(f"[run] dashboard: http://127.0.0.1:{a.dashboard_port}  "
-                  "(Ctrl+C to quit)", flush=True)
+                cwd=ROOT, env=dash_env, start_new_session=True,
+                stdin=subprocess.DEVNULL)
+            url = f"http://127.0.0.1:{a.dashboard_port}"
+            if _wait_http(url + "/_stcore/health", 60, dashboard) and not a.no_browser:
+                webbrowser.open(url)
+            print(f"[run] dashboard: {url}  (Ctrl+C to quit)", flush=True)
             dashboard.wait()
         else:
             print("[run] services running (Ctrl+C to quit)", flush=True)
@@ -166,6 +179,19 @@ def main(argv: list[str] | None = None) -> int:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         _shutdown(services, dashboard)
     return code
+
+
+def _wait_http(url: str, timeout: float, proc: subprocess.Popen) -> bool:
+    """True once url answers 200 (Streamlit's health endpoint), False on timeout/exit."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline and proc.poll() is None:
+        try:
+            with urllib.request.urlopen(url, timeout=1) as r:
+                if r.status == 200:
+                    return True
+        except OSError:
+            time.sleep(0.3)
+    return False
 
 
 def _shutdown(services: list[Service], dashboard: subprocess.Popen | None) -> None:

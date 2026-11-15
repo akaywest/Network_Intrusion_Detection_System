@@ -2,7 +2,7 @@
 
 A working list for the Chapter Four write-up: what the implementation added to the Chapter Three design, where it departs from it and why, and what has been found along the way. Append new entries as work goes on (see CLAUDE.md). Every figure has a source file in the repository, so the chapter can cite it.
 
-Last updated: 2026-11-15 (end of Phase 5 §7.1).
+Last updated: 2026-11-15 (Phase 5 §7.2 dashboard).
 
 ## 1. Database fields added beyond Table 3.10
 
@@ -71,7 +71,18 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - Engine and streamer are long-running services with loopback control ports 9101/9102. Many runs happen without restarting processes. The model loads on `prepare`, outside the timed path.
 - `set_rate` (FR2) is demonstration-only. It is logged, and the run is marked in `rate_changes` (§1 above). The streamer rejects it in burst mode, because the burst shape is the experiment.
 
-### 2.12 Isolation Forest score sign (plan §1.1 item 4)
+### 2.12 Dashboard details (plan §7.2, Fig. 3.12, Table 3.8)
+- **Seed selector** added to the sidebar (seeds 42–46). It is not in Table 3.8, but MODEL_RUN must store the seed (NFR3).
+- **Protocol mix shows TCP / UDP / Other.** The test partition has protocol codes 6, 17 and 0 only, so ICMP never occurs. It would appear automatically if present.
+- **"Live" windows** (traffic and protocol mix, last 60 s) are measured on the run's emission clock (t0 relative to the newest t0), not wall time, so a finished run still shows its last minute.
+- **Warm-up:** latency percentiles, throughput (Eq. 3.7) and component means exclude the first 100 records. Records and alerts count everything stored.
+- **Runs started from the dashboard** get `scenario = 'dashboard'`, and run 5,000 (steady) or 2,000 (burst) records from config.
+- **Δt slider during a run** sends `set_rate` (FR2, demo-only; the run is marked, §2.11).
+- **Colour:** benign is always blue and malicious always orange (a CVD-safe categorical pair). The latency components use four further categorical hues, with a table of values beside the chart.
+- **Dashboard delay** (§3.3.6) = `perf_counter_ns()` − max(t4) on each 1 s refresh while a run is live, appended to `results/dashboard_delay.csv`.
+- Streamlit runs **headless** and run.py opens the browser itself. Otherwise Streamlit's first-launch e-mail prompt blocks startup, which would break the three-step launch (NFR5).
+
+### 2.13 Isolation Forest score sign (plan §1.1 item 4)
 - s = −score_samples(x), because scikit-learn returns the negative of the score in Eq. 3.3.
 
 ## 3. Findings so far
@@ -96,3 +107,10 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 
 ### 3.5 Data cleaning
 - 34,474 exact duplicates removed (24,836 of them PortScan, which falls from 25,409 to 554 rows), 38 conflicting-duplicate rows removed, and 29 rows with missing values dropped (0.05% < 1% rule). Final count is 57,289 rows, split 40,102 / 8,593 / 8,594 (prep_report → `cleaning`, `split`). The PortScan collapse matters for per-class results.
+
+### 3.6 Dashboard delay and load with the dashboard open (preliminary, 2026-11-15)
+- One demonstration run (RF binary, seed 42, Δt = 100 ms, steady, stopped after ~2,700 records). The dashboard was open in **headless Chrome on the same 4-thread laptop**, so this is not an S1 measurement.
+- Dashboard delay over 26 refreshes: median **289 ms**, min 119 ms, max 617 ms.
+- In the same run (records 100–1,870): L p50 37.6 ms, **p95 102.7 ms, p99 484 ms**, throughput 10.0 rec/s. Mean components: t_tx 10.8, t_pre 0.18, t_inf 42.3, t_ser 2.2 ms. L spiked to ~1,000 ms several times.
+- The large mean t_tx is queueing: a record waits in the socket while the engine is still busy with an earlier one (RF ≈ 40 ms per record), so spikes propagate.
+- To separate the causes in S1: compare runs with the dashboard closed vs open (the design requires it open, §3.3.7), and line up spikes with WAL checkpoints (§3.3). If p95 > 100 ms holds in S1, NFR1 fails for RF under dashboard load. Report that as a finding.
