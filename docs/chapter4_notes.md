@@ -2,7 +2,7 @@
 
 A working list for the Chapter Four write-up: what the implementation added to the Chapter Three design, where it departs from it and why, and what has been found along the way. Append new entries as work goes on (see CLAUDE.md). Every figure has a source file in the repository, so the chapter can cite it.
 
-Last updated: 2026-11-16 (main matrix set finished; §3.9).
+Last updated: 2026-11-16 (sidebar shows script-started runs, §2.16).
 
 ## 1. Database fields added beyond Table 3.10
 
@@ -104,6 +104,11 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - **Charts:** latency components are a stacked horizontal bar in pipeline order t_tx, t_pre, t_inf, t_ser with the total at its end. The latency chart has a log-scale toggle, a bold dashed Δt line and a dotted p95 line, coloured green or red against Δt and labelled. Live traffic is a stacked area (benign bottom, malicious top). The protocol mix uses one neutral grey, so blue and orange only ever mean benign and malicious.
 - **Sidebar:** grouped into "Run settings" and "Actions". The records/s equivalent (1000/Δt) is shown under the Δt slider. While a run is active, model, task, seed, load and Start are locked. **The Δt slider stays live in steady runs**, because FR2 requires Δt to be configurable "before and during a run" (the change is demo-only and marks the run, §2.11). It locks in burst runs, where the streamer rejects set_rate. The sidebar status fragment triggers one full-app rerun when a run starts or ends, so the lock follows runs started elsewhere and runs that end on their own.
 - **Cost:** refresh is still 1 s, and the queries are the same five per refresh. `true_label` rides on the FLOW_RECORD join that `protocol` already used. The new figures are pandas arithmetic on the frame already loaded.
+
+### 2.16 Sidebar shows runs started by the experiment script (2026-11-16)
+- When the active run was started by `experiments/run_matrix.py` rather than the sidebar (MODEL_RUN.scenario ≠ `dashboard`), the sidebar shows **that run's** model, task, seed, Δt and load, with the note "started by experiment script (scenario …)". Before this, it kept whatever the viewer had last selected, which could misdescribe the run on screen. The viewer's own selections are restored when the run ends.
+- For such runs the **Δt slider is locked as well**. For dashboard runs it stays live, as the FR2 demo feature. A `set_rate` on an experiment run would mark it (`rate_changes`), and run_matrix would then have to repeat it.
+- Display only: nothing is sent to the engine, and the refresh queries are unchanged. The engine's existing `status` reply already carries the run's settings and scenario.
 
 ## 3. Findings so far
 

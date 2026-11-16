@@ -138,6 +138,40 @@ def flash(kind: str, text: str) -> None:
     st.session_state["flash"] = (kind, text)
 
 
+DASHBOARD_SCENARIO = "dashboard"   # MODEL_RUN.scenario of runs started from this sidebar
+SETTING_KEYS = ("model", "task", "seed", "dt_ms", "mode")
+
+
+def script_run_settings(run: dict | None) -> dict | None:
+    """Sidebar values for a run started outside the dashboard (experiments/run_matrix.py
+    sends its own scenario, e.g. S1), so the locked sidebar shows what is actually
+    running. None for no run or a run started from the dashboard."""
+    if not run or run.get("scenario") == DASHBOARD_SCENARIO:
+        return None
+    return {"model": run["model"],
+            "task": run["task"] if run["task"] in TASKS[run["model"]] else "binary",
+            "seed": int(run["seed"]),
+            "dt_ms": min(1000, max(1, int(round(float(run["dt_ms"]))))),
+            "mode": run["mode"]}
+
+
+def sync_script_run(run: dict | None) -> dict | None:
+    """Before the widgets are drawn: mirror a script-started run into the sidebar, and
+    restore the user's own choices once that run has ended."""
+    s = st.session_state
+    shown = script_run_settings(run)
+    if shown is not None:
+        if "script_stash" not in s:
+            s["script_stash"] = {k: s[k] for k in SETTING_KEYS if k in s}
+        for k, v in shown.items():
+            s[k] = v
+    elif "script_stash" in s:
+        for k in SETTING_KEYS:
+            s.pop(k, None)
+        s.update(s.pop("script_stash"))
+    return shown
+
+
 # ---------------------------------------------------------------- sidebar callbacks
 def on_start() -> None:
     s = st.session_state
@@ -146,7 +180,7 @@ def on_start() -> None:
     task = s["task"] if s["model"] != "iforest" else "binary"
     try:
         run_id = client().prepare(s["model"], task, int(s["seed"]), float(s["dt_ms"]),
-                                  mode, "dashboard", n, dashboard_open=True)
+                                  mode, DASHBOARD_SCENARIO, n, dashboard_open=True)
         try:
             client().start(run_id, float(s["dt_ms"]), mode, n,
                            CFG["stream"]["sample_seed"])
@@ -195,6 +229,12 @@ def sidebar() -> None:
     st.session_state["sidebar_locked_for"] = run["run_id"] if run else None
     locked = run is not None
     burst_run = locked and run.get("mode") == "burst"
+    # default set here, not as the slider's value=, so sync_script_run may set it first
+    st.session_state.setdefault("dt_ms", 100)
+    by_script = sync_script_run(run) is not None
+    # Δt stays live only for dashboard demo runs (FR2): a set_rate on an experiment run
+    # would mark it and run_matrix would have to repeat it (plan §7.1)
+    dt_locked = burst_run or by_script
 
     st.sidebar.header(TITLE)
     st.sidebar.caption(SUBTITLE)
@@ -207,16 +247,20 @@ def sidebar() -> None:
                      horizontal=True, disabled=locked or len(TASKS[model]) == 1,
                      help="Isolation Forest is binary only" if model == "iforest" else None)
     st.sidebar.selectbox("Seed", CFG["seeds"], key="seed", disabled=locked)
-    st.sidebar.slider("Emission interval Δt (ms)", 1, 1000, 100, key="dt_ms",
-                      on_change=on_dt_change, disabled=burst_run,
+    st.sidebar.slider("Emission interval Δt (ms)", 1, 1000, key="dt_ms",
+                      on_change=on_dt_change, disabled=dt_locked,
                       help="Moving this during a steady run changes the rate for that "
                            "run (FR2; demo only, the run is marked).")
     dt = float(st.session_state["dt_ms"])
     st.sidebar.caption(rate_text(dt) + (" · changes now apply to the live run (demo)"
-                                        if locked and not burst_run else ""))
+                                        if locked and not dt_locked else ""))
     st.sidebar.radio("Load", ("steady", "burst"), format_func=str.capitalize, key="mode",
                      horizontal=True, disabled=locked)
-    if locked:
+    if by_script:
+        st.sidebar.info(f"Run {run['run_id']} was started by experiment script "
+                        f"(scenario {run['scenario']}). The settings above are that run's; "
+                        "they are locked, Δt included, until it ends.")
+    elif locked:
         st.sidebar.caption(f"Settings are locked while run {run['run_id']} is active.")
 
     st.sidebar.subheader("Actions")

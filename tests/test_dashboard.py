@@ -215,3 +215,42 @@ def test_start_stop_from_sidebar_and_delay_log(services, app_env):
     assert rows and rows[-1]["run_id"] == str(run_id) and float(rows[-1]["delay_ms"]) >= 0
     print(f"\ndashboard Start/Stop: run {run_id} stopped after {eng['processed']} records; "
           f"dashboard delay {float(rows[-1]['delay_ms']):.1f} ms")
+
+
+@needs_data
+def test_sidebar_mirrors_run_started_by_experiment_script(services, app_env):
+    """A run started outside the dashboard (run_matrix's prepare/start, scenario != the
+    dashboard's) is shown in the locked sidebar with its real settings and a note."""
+    app_env(services)
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    at.sidebar.selectbox(key="model").set_value("lstm")     # the user's own choices
+    at.sidebar.selectbox(key="seed").set_value(46)
+    at.sidebar.slider(key="dt_ms").set_value(250)
+    at.run()
+    c = services.client
+    run_id = c.prepare("rf", "multi", 44, 20.0, "steady", "rm-test-S1", 300,
+                       dashboard_open=True)
+    c.start(run_id, 20.0, "steady", 300)
+    try:
+        at.run()
+        assert not at.exception
+        sb = at.sidebar
+        assert (sb.selectbox(key="model").value, sb.radio(key="task").value,
+                sb.selectbox(key="seed").value, sb.slider(key="dt_ms").value,
+                sb.radio(key="mode").value) == ("rf", "multi", 44, 20, "steady")
+        assert all(w.disabled for w in (sb.selectbox(key="model"), sb.radio(key="task"),
+                                        sb.selectbox(key="seed"), sb.slider(key="dt_ms"),
+                                        sb.radio(key="mode"), at.button(key="start")))
+        notes = [i.value for i in sb.info]
+        assert any("started by experiment script" in n and f"Run {run_id}" in n
+                   and "rm-test-S1" in n for n in notes), notes
+        assert not [w.value for w in sb.warning]           # no Session State warning
+    finally:
+        c.stop()
+        eng = c.wait_done(run_id, timeout=60)
+    at.run()                                               # run ended: choices restored
+    sb = at.sidebar
+    assert (sb.selectbox(key="model").value, sb.selectbox(key="seed").value,
+            sb.slider(key="dt_ms").value) == ("lstm", 46, 250)
+    assert not sb.selectbox(key="model").disabled and not sb.info
+    assert eng["rate_changes"] is None                     # the run was never re-paced
