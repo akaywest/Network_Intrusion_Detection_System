@@ -182,3 +182,9 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - **§8.4 agreement: 105/105 runs at 100%**, 0 disagreeing records. Streamed labels equal the offline labels for the same model, seed and row_index, so online and offline preprocessing match (control 8).
 - **Dashboard refresh:** 60 of 105 runs are below 0.5 refreshes/s (`low_refresh` column; §3.9).
 - **Open vs closed (S1):** skipped until the closed set is run. Re-run `python -m nids.evaluation.system_metrics` afterwards; it overwrites every output.
+
+### 3.11 Testing (plan §9; 2026-11-16, `docs/testing_report.md`)
+- Full suite: **124 passed, 2 failed** of 126 (9 min 11 s). Both failures are test faults, not pipeline faults, and no code was changed: (a) the NFR6 static SQL check flags a literal, parameterised query held in a local variable in `system_metrics.load_records` (false positive); (b) the run_matrix headless test counts an `rm-test-S1` run created earlier in the session by a dashboard test that uses the same label. It passes on its own.
+- **ST2 PASS:** with `run.py` and the dashboard running, `netstat -an` shows only 127.0.0.1 listeners (9100, 9101, 9102, 8501).
+- **ST3 PASS:** S1 run 6 (LSTM binary, seed 42) replayed offline twice through Preprocessor + Detector: 0 of 5,000 labels differ, and score/confidence differences are 0.0.
+- UT3's "warm-up for the first W−1 records" clause does not apply under formulation B (§2.6). UAT materials are in `docs/uat/`, and UAT has not been run yet.
