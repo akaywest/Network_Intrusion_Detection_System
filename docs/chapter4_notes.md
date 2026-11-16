@@ -2,7 +2,7 @@
 
 A working list for the Chapter Four write-up: what the implementation added to the Chapter Three design, where it departs from it and why, and what has been found along the way. Append new entries as work goes on (see CLAUDE.md). Every figure has a source file in the repository, so the chapter can cite it.
 
-Last updated: 2026-11-16 (sidebar shows script-started runs, §2.16).
+Last updated: 2026-11-16 (Phase 6 §8.3–8.5 system metrics; §2.17, §3.10).
 
 ## 1. Database fields added beyond Table 3.10
 
@@ -110,6 +110,16 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - For such runs the **Δt slider is locked as well**. For dashboard runs it stays live, as the FR2 demo feature. A `set_rate` on an experiment run would mark it (`rate_changes`), and run_matrix would then have to repeat it.
 - Display only: nothing is sent to the engine, and the refresh queries are unchanged. The engine's existing `status` reply already carries the run's settings and scenario.
 
+### 2.17 System-metric definitions used (plan §8.3–8.4; `nids.evaluation.system_metrics`)
+- **Runs used:** scenario S1–S4, end_reason `complete`, rate_changes NULL, PREDICTION count = n_records, dashboard state declared. Dashboard-open runs also need ≥ 1 dashboard-delay row (run_matrix's acceptance rule), so zero-refresh runs **65 and 84** are excluded; their repeats are used. If a configuration had two accepted runs, the later would be used (none at present). Excluded runs stay in `latency_summary.csv` with `included = False` and the reason.
+- **Warm-up:** the first 100 records (seq_no < 100) are excluded from L, the components, throughput and backlog statistics. Backlog still counts warm-up records as earlier records j, because they occupy the queue.
+- **Backlog** of record i = earlier records j with t4_j > t0_i, computed after the run from the timestamps. The engine is FIFO, so t4 rises with seq_no and a sorted search gives it exactly.
+- **Throughput (Eq. 3.7)** runs from the first post-warm-up t0 to the last t4. Under overload it includes the backlog inherited from the warm-up records, so it **sits below the engine's service rate** (synthetic check: 15 ms service, 10 ms Δt → 57.1/s, not 66.7/s; `tests/test_system_metrics.py`). Report it as the Eq. 3.7 figure, not as capacity.
+- **S4 recovery** = t4 of the first record of the first run of 20 consecutive records with L ≤ 100 ms after the last back-to-back emission, minus that emission's t0. "Not recovered" when no such run occurs before the run ends.
+- **Verdicts:** NFR1 (p95 ≤ 100 ms in S1) and NFR2 (S2: p95 ≤ 10 ms and backlog not growing) are **PASS** when all 5 seeds pass, **FAIL** when the seed mean fails, and MIXED otherwise. NFR2 is required for IF and RF and is a finding for the LSTM. Only dashboard-open runs feed the verdicts (the design condition).
+- **Sustainable rate (S3):** the smallest Δt in {100, 50, 20, 10, 5, 1} at which all 5 seeds pass and every larger Δt passes too.
+- **Backlog "not growing" uses a 1-record tolerance (clarification of plan §8.3; decided 2026-11-16).** A run counts as not growing when its mean backlog in the last 10% of post-warm-up records exceeds the first 10% by **at most 1 record** (`BACKLOG_TOL`, `--backlog-tolerance`). Why: the literal rule (last ≤ first) misfires on stable runs. Their mean backlog is about 0.01 records, so one HDD stall near the end flags them as "growing". Runs within their p95 target show growth of −0.06 to +0.04 records; runs that can't keep up show growth of −6 to 4,337 (median ≈ 2,300), so a 1-record tolerance separates them with a wide margin. Under the literal rule no model would have a sustainable rate even at 100 ms (3–4 of 5 seeds pass). With the tolerance, the backlog check changes no verdict that p95 ≤ Δt alone would not give. The NFR verdicts are the same under both rules.
+
 ## 3. Findings so far
 
 ### 3.1 Isolation Forest has a ~40% false-positive rate
@@ -162,3 +172,13 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
   - During **run 29** (S2, RF, seed 43): it was left with end_reason NULL after 652 records (a hard stop), and run_matrix itself was ended by a signal while waiting.
   - During **run 49** (S1, LSTM, seed 44): stopped cleanly by a signal (end_reason `stopped`, 1,860 records).
   - Both were repeated on resume, after the services had been restarted (the first resume attempt was refused because they were not running). Including the two throttling stops, the set was run in **five sessions** (resumes at 25, 44, 59 and 77 runs complete). No completed run was lost or repeated.
+
+### 3.10 System metrics, main set (dashboard open; 2026-11-16, `results/latency_summary.csv`, `system_summary.csv`, `nfr_verdicts.csv`)
+- **NFR1 PASS for all three models** (S1, p95 of L, mean ± SD over 5 seeds, 5/5 seeds each): IF **36.2 ± 9.3 ms**, RF **67.4 ± 16.3 ms**, LSTM **18.5 ± 1.7 ms**. p99: 74.8 / 161.6 / 37.7 ms, so RF's tail exceeds 100 ms. Max L 295–373 ms for all models: isolated spikes (§3.3 WAL/HDD), visible in `plots/burst_S4.png` before the burst as well.
+- **NFR2 FAIL for IF and RF** (S2, Δt 10 ms, 0/5 seeds sustain): Eq. 3.7 throughput IF **70.8 ± 11.9/s**, RF **24.8 ± 3.6/s**, and the backlog grows to ~1,400 and ~3,800 records. **LSTM (finding):** throughput 99.9/s and p50 9.6 ms, but p95 267 ms > 10 ms with a backlog of up to ~40 records, so it also fails the p95 ≤ Δt rule at exactly 100 records/s.
+- **Inference under dashboard load is slower than the standalone benchmark:** mean t_inf in S1 IF 20.6, RF 44.8, LSTM 10.9 ms vs 11.8 / 37.2 / 6.5 ms in `detector_timing.json` (§3.2). This is consistent with a shared 4-thread CPU. The open-vs-closed comparison will quantify it.
+- **S3 sustainable rate** (all 5 seeds, 1-record backlog tolerance, §2.17): **IF 50 ms (20 records/s), LSTM 50 ms (20 records/s), RF 100 ms (10 records/s).** At Δt ≤ 20 ms (IF, LSTM) and ≤ 50 ms (RF) the queue grows without bound, and p95 reaches tens to hundreds of seconds (`sustainable_rate.csv`, `plots/rate_search_S3.png`).
+- **S4 burst:** peak L IF 14.1 ± 1.6 s, RF 43.7 ± 6.9 s, LSTM 7.5 ± 1.1 s. Recovery IF **16.3 ± 2.1 s**, LSTM **8.7 ± 1.2 s** (5/5 each). **RF did not recover within the run (0/5):** the 1,000-record backlog at ~44 ms per record (~44 s of work) drains at only ~56 ms per 100 ms tail record, which needs ~77 s against the 50 s tail.
+- **§8.4 agreement: 105/105 runs at 100%**, 0 disagreeing records. Streamed labels equal the offline labels for the same model, seed and row_index, so online and offline preprocessing match (control 8).
+- **Dashboard refresh:** 60 of 105 runs are below 0.5 refreshes/s (`low_refresh` column; §3.9).
+- **Open vs closed (S1):** skipped until the closed set is run. Re-run `python -m nids.evaluation.system_metrics` afterwards; it overwrites every output.
