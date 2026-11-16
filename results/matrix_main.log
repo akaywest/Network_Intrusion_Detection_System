@@ -1,0 +1,269 @@
+nohup: ignoring input
+[matrix] set 'main': 105 runs, 0 already complete, 105 pending, 105 to do now
+[matrix] buffers OK (wmem_max=8388608, rmem_max=8388608); dashboard open; pause 20 s; est. 6h13m
+[matrix] 1/105 S1 iforest seed 42 dt 100 ms steady n 5000 (est. 8m23s)
+[matrix]   run 4: complete, processed 5000/5000, malformed 0, took 8m24s, pacing lateness p99 2.32 ms, dashboard refreshes 465
+[matrix] 2/105 S1 rf seed 42 dt 100 ms steady n 5000 (est. 8m25s)
+[matrix]   run 5: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 0.44 ms, dashboard refreshes 73
+[matrix] 3/105 S1 lstm seed 42 dt 100 ms steady n 5000 (est. 8m31s)
+[matrix]   run 6: complete, processed 5000/5000, malformed 0, took 8m25s, pacing lateness p99 0.00 ms, dashboard refreshes 15
+[matrix] 4/105 S2 iforest seed 42 dt 10 ms steady n 5000 (est. 1m17s)
+[matrix]   run 7: complete, processed 5000/5000, malformed 0, took 1m01s, pacing lateness p99 0.00 ms, dashboard refreshes 7
+[matrix] 5/105 S2 rf seed 42 dt 10 ms steady n 5000 (est. 3m26s)
+[matrix]   run 8: complete, processed 5000/5000, malformed 0, took 3m02s, pacing lateness p99 0.00 ms, dashboard refreshes 9
+[matrix] 6/105 S2 lstm seed 42 dt 10 ms steady n 5000 (est. 1m01s)
+[matrix]   run 9: complete, processed 5000/5000, malformed 0, took 0m52s, pacing lateness p99 0.47 ms, dashboard refreshes 7
+[matrix] 7/105 S3 iforest seed 42 dt 50 ms steady n 5000 (est. 4m13s)
+[matrix]   run 10: complete, processed 5000/5000, malformed 0, took 4m11s, pacing lateness p99 0.01 ms, dashboard refreshes 10
+[matrix] 8/105 S3 rf seed 42 dt 50 ms steady n 5000 (est. 4m15s)
+[matrix]   run 11: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.01 ms, dashboard refreshes 11
+[matrix] 9/105 S3 lstm seed 42 dt 50 ms steady n 5000 (est. 4m21s)
+[matrix]   run 12: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.00 ms, dashboard refreshes 10
+[matrix] 10/105 S3 iforest seed 42 dt 20 ms steady n 5000 (est. 1m43s)
+[matrix]   run 13: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 0.00 ms, dashboard refreshes 7
+[matrix] 11/105 S3 rf seed 42 dt 20 ms steady n 5000 (est. 3m26s)
+[matrix]   run 14: complete, processed 5000/5000, malformed 0, took 3m52s, pacing lateness p99 1.96 ms, dashboard refreshes 160
+[matrix] 12/105 S3 lstm seed 42 dt 20 ms steady n 5000 (est. 1m51s)
+[matrix]   run 15: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 0.15 ms, dashboard refreshes 99
+[matrix] 13/105 S3 iforest seed 42 dt 5 ms steady n 5000 (est. 1m17s)
+[matrix]   run 16: complete, processed 5000/5000, malformed 0, took 1m17s, pacing lateness p99 1.93 ms, dashboard refreshes 76
+[matrix] 14/105 S3 rf seed 42 dt 5 ms steady n 5000 (est. 3m26s)
+[matrix]   run 17: complete, processed 5000/5000, malformed 0, took 4m03s, pacing lateness p99 1.98 ms, dashboard refreshes 241
+[matrix] 15/105 S3 lstm seed 42 dt 5 ms steady n 5000 (est. 0m58s)
+[matrix]   run 18: complete, processed 5000/5000, malformed 0, took 0m43s, pacing lateness p99 1.21 ms, dashboard refreshes 41
+[matrix] 16/105 S3 iforest seed 42 dt 1 ms steady n 5000 (est. 1m17s)
+[matrix]   run 19: complete, processed 5000/5000, malformed 0, took 1m17s, pacing lateness p99 0.42 ms, dashboard refreshes 77
+[matrix] 17/105 S3 rf seed 42 dt 1 ms steady n 5000 (est. 3m26s)
+[matrix]   run 20: complete, processed 5000/5000, malformed 0, took 4m09s, pacing lateness p99 1.79 ms, dashboard refreshes 247
+[matrix] 18/105 S3 lstm seed 42 dt 1 ms steady n 5000 (est. 0m58s)
+[matrix]   run 21: complete, processed 5000/5000, malformed 0, took 0m44s, pacing lateness p99 1.61 ms, dashboard refreshes 43
+[matrix] 19/105 S4 iforest seed 42 dt 100 ms burst n 2000 (est. 1m43s)
+[matrix]   run 22: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 43.23 ms, dashboard refreshes 100
+[matrix] 20/105 S4 rf seed 42 dt 100 ms burst n 2000 (est. 1m55s)
+[matrix]   run 23: complete, processed 2000/2000, malformed 0, took 2m03s, pacing lateness p99 31.38 ms, dashboard refreshes 121
+[matrix] 21/105 S4 lstm seed 42 dt 100 ms burst n 2000 (est. 1m51s)
+[matrix]   run 24: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 25.88 ms, dashboard refreshes 100
+[matrix] 22/105 S1 iforest seed 43 dt 100 ms steady n 5000 (est. 8m23s)
+[matrix]   run 25: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 0.73 ms, dashboard refreshes 499
+[matrix] 23/105 S1 rf seed 43 dt 100 ms steady n 5000 (est. 8m25s)
+[matrix]   run 26: complete, processed 5000/5000, malformed 0, took 8m23s, pacing lateness p99 0.80 ms, dashboard refreshes 500
+[matrix] 24/105 S1 lstm seed 43 dt 100 ms steady n 5000 (est. 8m31s)
+[matrix]   run 27: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 0.76 ms, dashboard refreshes 500
+[matrix] 25/105 S2 iforest seed 43 dt 10 ms steady n 5000 (est. 1m17s)
+[matrix]   run 28: complete, processed 5000/5000, malformed 0, took 1m31s, pacing lateness p99 4.71 ms, dashboard refreshes 86
+[matrix] 26/105 S2 rf seed 43 dt 10 ms steady n 5000 (est. 3m26s)
+
+[matrix] interrupted: stopping the active run cleanly
+Traceback (most recent call last):
+  File "/home/akay/nids/experiments/run_matrix.py", line 512, in main
+    eng = client.wait_done(run_id, timeout=3 * est + 300)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/akay/nids/src/nids/control/client.py", line 133, in wait_done
+    time.sleep(poll_s)
+  File "/home/akay/nids/experiments/run_matrix.py", line 454, in _term
+    raise KeyboardInterrupt
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/akay/nids/experiments/run_matrix.py", line 578, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/akay/nids/experiments/run_matrix.py", line 562, in main
+    client.wait_done(active["run_id"], timeout=60)
+  File "/home/akay/nids/src/nids/control/client.py", line 133, in wait_done
+    time.sleep(poll_s)
+  File "/home/akay/nids/experiments/run_matrix.py", line 454, in _term
+    raise KeyboardInterrupt
+KeyboardInterrupt
+nohup: ignoring input
+[matrix] set 'main': 105 runs, 25 already complete, 80 pending, 80 to do now
+[matrix] buffers OK (wmem_max=8388608, rmem_max=8388608); dashboard open; pause 20 s; est. 4h30m
+[matrix] 1/80 S2 rf seed 43 dt 10 ms steady n 5000 (est. 3m26s)
+[matrix]   run 30: complete, processed 5000/5000, malformed 0, took 3m02s, pacing lateness p99 0.03 ms, dashboard refreshes 8
+[matrix] 2/80 S2 lstm seed 43 dt 10 ms steady n 5000 (est. 1m01s)
+[matrix]   run 31: complete, processed 5000/5000, malformed 0, took 1m01s, pacing lateness p99 0.00 ms, dashboard refreshes 7
+[matrix] 3/80 S3 iforest seed 43 dt 50 ms steady n 5000 (est. 4m13s)
+[matrix]   run 32: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.01 ms, dashboard refreshes 10
+[matrix] 4/80 S3 rf seed 43 dt 50 ms steady n 5000 (est. 4m15s)
+[matrix]   run 33: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.01 ms, dashboard refreshes 10
+[matrix] 5/80 S3 lstm seed 43 dt 50 ms steady n 5000 (est. 4m21s)
+[matrix]   run 34: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.01 ms, dashboard refreshes 11
+[matrix] 6/80 S3 iforest seed 43 dt 20 ms steady n 5000 (est. 1m43s)
+[matrix]   run 35: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 0.01 ms, dashboard refreshes 8
+[matrix] 7/80 S3 rf seed 43 dt 20 ms steady n 5000 (est. 3m26s)
+[matrix]   run 36: complete, processed 5000/5000, malformed 0, took 3m05s, pacing lateness p99 0.00 ms, dashboard refreshes 9
+[matrix] 8/80 S3 lstm seed 43 dt 20 ms steady n 5000 (est. 1m51s)
+[matrix]   run 37: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 0.01 ms, dashboard refreshes 8
+[matrix] 9/80 S3 iforest seed 43 dt 5 ms steady n 5000 (est. 1m17s)
+[matrix]   run 38: complete, processed 5000/5000, malformed 0, took 1m02s, pacing lateness p99 0.07 ms, dashboard refreshes 7
+[matrix] 10/80 S3 rf seed 43 dt 5 ms steady n 5000 (est. 3m26s)
+[matrix]   run 39: complete, processed 5000/5000, malformed 0, took 3m03s, pacing lateness p99 0.00 ms, dashboard refreshes 9
+[matrix] 11/80 S3 lstm seed 43 dt 5 ms steady n 5000 (est. 0m58s)
+[matrix]   run 40: complete, processed 5000/5000, malformed 0, took 0m36s, pacing lateness p99 0.02 ms, dashboard refreshes 7
+[matrix] 12/80 S3 iforest seed 43 dt 1 ms steady n 5000 (est. 1m17s)
+[matrix]   run 41: complete, processed 5000/5000, malformed 0, took 1m01s, pacing lateness p99 1.17 ms, dashboard refreshes 7
+[matrix] 13/80 S3 rf seed 43 dt 1 ms steady n 5000 (est. 3m26s)
+[matrix]   run 42: complete, processed 5000/5000, malformed 0, took 3m03s, pacing lateness p99 0.33 ms, dashboard refreshes 10
+[matrix] 14/80 S3 lstm seed 43 dt 1 ms steady n 5000 (est. 0m58s)
+[matrix]   run 43: complete, processed 5000/5000, malformed 0, took 0m34s, pacing lateness p99 0.00 ms, dashboard refreshes 3
+[matrix] 15/80 S4 iforest seed 43 dt 100 ms burst n 2000 (est. 1m43s)
+[matrix]   run 44: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 57.89 ms, dashboard refreshes 8
+[matrix] 16/80 S4 rf seed 43 dt 100 ms burst n 2000 (est. 1m55s)
+[matrix]   run 45: complete, processed 2000/2000, malformed 0, took 1m45s, pacing lateness p99 37.31 ms, dashboard refreshes 8
+[matrix] 17/80 S4 lstm seed 43 dt 100 ms burst n 2000 (est. 1m51s)
+[matrix]   run 46: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 72.56 ms, dashboard refreshes 8
+[matrix] 18/80 S1 iforest seed 44 dt 100 ms steady n 5000 (est. 8m23s)
+[matrix]   run 47: complete, processed 5000/5000, malformed 0, took 8m21s, pacing lateness p99 0.01 ms, dashboard refreshes 14
+[matrix] 19/80 S1 rf seed 44 dt 100 ms steady n 5000 (est. 8m25s)
+[matrix]   run 48: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 0.02 ms, dashboard refreshes 14
+[matrix] 20/80 S1 lstm seed 44 dt 100 ms steady n 5000 (est. 8m31s)
+
+[matrix] interrupted: stopping the active run cleanly
+[matrix] run 49 stopped (end_reason 'stopped'; it will be repeated on resume)
+nohup failed with exit status 130.
+nohup: ignoring input
+[matrix] set 'main': 105 runs, 44 already complete, 61 pending, 61 to do now
+[matrix] REFUSING: engine/streamer not running; start `python run.py` or pass --launch
+nohup failed with exit status 2.
+nohup: ignoring input
+[matrix] set 'main': 105 runs, 44 already complete, 61 pending, 61 to do now
+[matrix] buffers OK (wmem_max=8388608, rmem_max=8388608); dashboard open; pause 20 s; est. 3h26m
+[matrix] 1/61 S1 lstm seed 44 dt 100 ms steady n 5000 (est. 8m31s)
+[matrix]   run 50: complete, processed 5000/5000, malformed 0, took 10m09s, pacing lateness p99 0.65 ms, dashboard refreshes 131
+[matrix] 2/61 S2 iforest seed 44 dt 10 ms steady n 5000 (est. 1m17s)
+[matrix]   run 51: complete, processed 5000/5000, malformed 0, took 1m13s, pacing lateness p99 0.78 ms, dashboard refreshes 7
+[matrix] 3/61 S2 rf seed 44 dt 10 ms steady n 5000 (est. 3m26s)
+[matrix]   run 52: complete, processed 5000/5000, malformed 0, took 3m36s, pacing lateness p99 2.85 ms, dashboard refreshes 51
+[matrix] 4/61 S2 lstm seed 44 dt 10 ms steady n 5000 (est. 1m01s)
+[matrix]   run 53: complete, processed 5000/5000, malformed 0, took 0m52s, pacing lateness p99 0.07 ms, dashboard refreshes 7
+[matrix] 5/61 S3 iforest seed 44 dt 50 ms steady n 5000 (est. 4m13s)
+[matrix]   run 54: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.01 ms, dashboard refreshes 10
+[matrix] 6/61 S3 rf seed 44 dt 50 ms steady n 5000 (est. 4m15s)
+[matrix]   run 55: complete, processed 5000/5000, malformed 0, took 4m11s, pacing lateness p99 0.03 ms, dashboard refreshes 10
+[matrix] 7/61 S3 lstm seed 44 dt 50 ms steady n 5000 (est. 4m21s)
+[matrix]   run 56: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.01 ms, dashboard refreshes 10
+[matrix] 8/61 S3 iforest seed 44 dt 20 ms steady n 5000 (est. 1m43s)
+[matrix]   run 57: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 0.02 ms, dashboard refreshes 8
+[matrix] 9/61 S3 rf seed 44 dt 20 ms steady n 5000 (est. 3m26s)
+[matrix]   run 58: complete, processed 5000/5000, malformed 0, took 3m16s, pacing lateness p99 0.01 ms, dashboard refreshes 10
+[matrix] 10/61 S3 lstm seed 44 dt 20 ms steady n 5000 (est. 1m51s)
+[matrix]   run 59: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 0.01 ms, dashboard refreshes 8
+[matrix] 11/61 S3 iforest seed 44 dt 5 ms steady n 5000 (est. 1m17s)
+[matrix]   run 60: complete, processed 5000/5000, malformed 0, took 1m03s, pacing lateness p99 0.01 ms, dashboard refreshes 7
+[matrix] 12/61 S3 rf seed 44 dt 5 ms steady n 5000 (est. 3m26s)
+[matrix]   run 61: complete, processed 5000/5000, malformed 0, took 3m09s, pacing lateness p99 0.11 ms, dashboard refreshes 10
+[matrix] 13/61 S3 lstm seed 44 dt 5 ms steady n 5000 (est. 0m58s)
+[matrix]   run 62: complete, processed 5000/5000, malformed 0, took 0m38s, pacing lateness p99 0.00 ms, dashboard refreshes 7
+[matrix] 14/61 S3 iforest seed 44 dt 1 ms steady n 5000 (est. 1m17s)
+[matrix]   run 63: complete, processed 5000/5000, malformed 0, took 1m02s, pacing lateness p99 0.00 ms, dashboard refreshes 7
+[matrix] 15/61 S3 rf seed 44 dt 1 ms steady n 5000 (est. 3m26s)
+[matrix]   run 64: complete, processed 5000/5000, malformed 0, took 3m58s, pacing lateness p99 0.00 ms, dashboard refreshes 112
+[matrix] 16/61 S3 lstm seed 44 dt 1 ms steady n 5000 (est. 0m58s)
+[matrix]   run 65: complete, processed 5000/5000, malformed 0, took 0m40s, pacing lateness p99 0.12 ms, dashboard refreshes 0
+[matrix] STOPPING: the dashboard is up but no browser refreshed during run 65 (no rows in dashboard_delay.csv); open http://127.0.0.1:8501 and rerun. Run 65 will be repeated.
+nohup failed with exit status 3.
+nohup: ignoring input
+[matrix] set 'main': 105 runs, 59 already complete, 46 pending, 46 to do now
+[matrix] buffers OK (wmem_max=8388608, rmem_max=8388608); dashboard open; pause 20 s; est. 2h36m
+[matrix] 1/46 S3 lstm seed 44 dt 1 ms steady n 5000 (est. 0m58s)
+[matrix]   run 66: complete, processed 5000/5000, malformed 0, took 0m53s, pacing lateness p99 9.67 ms, dashboard refreshes 49
+[matrix] 2/46 S4 iforest seed 44 dt 100 ms burst n 2000 (est. 1m43s)
+[matrix]   run 67: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 30.22 ms, dashboard refreshes 38
+[matrix] 3/46 S4 rf seed 44 dt 100 ms burst n 2000 (est. 1m55s)
+[matrix]   run 68: complete, processed 2000/2000, malformed 0, took 1m47s, pacing lateness p99 26.96 ms, dashboard refreshes 8
+[matrix] 4/46 S4 lstm seed 44 dt 100 ms burst n 2000 (est. 1m51s)
+[matrix]   run 69: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 73.62 ms, dashboard refreshes 8
+[matrix] 5/46 S1 iforest seed 45 dt 100 ms steady n 5000 (est. 8m23s)
+[matrix]   run 70: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 0.01 ms, dashboard refreshes 15
+[matrix] 6/46 S1 rf seed 45 dt 100 ms steady n 5000 (est. 8m25s)
+[matrix]   run 71: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 0.01 ms, dashboard refreshes 14
+[matrix] 7/46 S1 lstm seed 45 dt 100 ms steady n 5000 (est. 8m31s)
+[matrix]   run 72: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 0.00 ms, dashboard refreshes 14
+[matrix] 8/46 S2 iforest seed 45 dt 10 ms steady n 5000 (est. 1m17s)
+[matrix]   run 73: complete, processed 5000/5000, malformed 0, took 1m03s, pacing lateness p99 0.01 ms, dashboard refreshes 8
+[matrix] 9/46 S2 rf seed 45 dt 10 ms steady n 5000 (est. 3m26s)
+[matrix]   run 74: complete, processed 5000/5000, malformed 0, took 3m06s, pacing lateness p99 0.00 ms, dashboard refreshes 9
+[matrix] 10/46 S2 lstm seed 45 dt 10 ms steady n 5000 (est. 1m01s)
+[matrix]   run 75: complete, processed 5000/5000, malformed 0, took 0m52s, pacing lateness p99 0.15 ms, dashboard refreshes 7
+[matrix] 11/46 S3 iforest seed 45 dt 50 ms steady n 5000 (est. 4m13s)
+[matrix]   run 76: complete, processed 5000/5000, malformed 0, took 4m11s, pacing lateness p99 0.01 ms, dashboard refreshes 11
+[matrix] 12/46 S3 rf seed 45 dt 50 ms steady n 5000 (est. 4m15s)
+[matrix]   run 77: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.00 ms, dashboard refreshes 10
+[matrix] 13/46 S3 lstm seed 45 dt 50 ms steady n 5000 (est. 4m21s)
+[matrix]   run 78: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.01 ms, dashboard refreshes 10
+[matrix] 14/46 S3 iforest seed 45 dt 20 ms steady n 5000 (est. 1m43s)
+[matrix]   run 79: complete, processed 5000/5000, malformed 0, took 1m41s, pacing lateness p99 0.00 ms, dashboard refreshes 8
+[matrix] 15/46 S3 rf seed 45 dt 20 ms steady n 5000 (est. 3m26s)
+[matrix]   run 80: complete, processed 5000/5000, malformed 0, took 3m07s, pacing lateness p99 0.00 ms, dashboard refreshes 9
+[matrix] 16/46 S3 lstm seed 45 dt 20 ms steady n 5000 (est. 1m51s)
+[matrix]   run 81: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 0.01 ms, dashboard refreshes 7
+[matrix] 17/46 S3 iforest seed 45 dt 5 ms steady n 5000 (est. 1m17s)
+[matrix]   run 82: complete, processed 5000/5000, malformed 0, took 1m03s, pacing lateness p99 0.00 ms, dashboard refreshes 7
+[matrix] 18/46 S3 rf seed 45 dt 5 ms steady n 5000 (est. 3m26s)
+[matrix]   run 83: complete, processed 5000/5000, malformed 0, took 3m05s, pacing lateness p99 0.02 ms, dashboard refreshes 9
+[matrix] 19/46 S3 lstm seed 45 dt 5 ms steady n 5000 (est. 0m58s)
+[matrix]   run 84: complete, processed 5000/5000, malformed 0, took 0m36s, pacing lateness p99 0.01 ms, dashboard refreshes 0
+[matrix] STOPPING: the dashboard is up but no browser refreshed during run 84 (no rows in dashboard_delay.csv); open http://127.0.0.1:8501 and rerun. Run 84 will be repeated.
+nohup failed with exit status 3.
+nohup: ignoring input
+[matrix] set 'main': 105 runs, 77 already complete, 28 pending, 28 to do now
+[matrix] buffers OK (wmem_max=8388608, rmem_max=8388608); dashboard open; pause 20 s; est. 1h28m
+[matrix] 1/28 S3 lstm seed 45 dt 5 ms steady n 5000 (est. 0m58s)
+[matrix]   run 85: complete, processed 5000/5000, malformed 0, took 0m49s, pacing lateness p99 6.58 ms, dashboard refreshes 37
+[matrix] 2/28 S3 iforest seed 45 dt 1 ms steady n 5000 (est. 1m17s)
+[matrix]   run 86: complete, processed 5000/5000, malformed 0, took 1m20s, pacing lateness p99 5.28 ms, dashboard refreshes 79
+[matrix] 3/28 S3 rf seed 45 dt 1 ms steady n 5000 (est. 3m26s)
+[matrix]   run 87: complete, processed 5000/5000, malformed 0, took 4m09s, pacing lateness p99 0.77 ms, dashboard refreshes 247
+[matrix] 4/28 S3 lstm seed 45 dt 1 ms steady n 5000 (est. 0m58s)
+[matrix]   run 88: complete, processed 5000/5000, malformed 0, took 0m48s, pacing lateness p99 16.45 ms, dashboard refreshes 46
+[matrix] 5/28 S4 iforest seed 45 dt 100 ms burst n 2000 (est. 1m43s)
+[matrix]   run 89: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 42.85 ms, dashboard refreshes 100
+[matrix] 6/28 S4 rf seed 45 dt 100 ms burst n 2000 (est. 1m55s)
+[matrix]   run 90: complete, processed 2000/2000, malformed 0, took 2m08s, pacing lateness p99 43.23 ms, dashboard refreshes 126
+[matrix] 7/28 S4 lstm seed 45 dt 100 ms burst n 2000 (est. 1m51s)
+[matrix]   run 91: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 62.86 ms, dashboard refreshes 101
+[matrix] 8/28 S1 iforest seed 46 dt 100 ms steady n 5000 (est. 8m23s)
+[matrix]   run 92: complete, processed 5000/5000, malformed 0, took 8m21s, pacing lateness p99 0.28 ms, dashboard refreshes 500
+[matrix] 9/28 S1 rf seed 46 dt 100 ms steady n 5000 (est. 8m25s)
+[matrix]   run 93: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 1.53 ms, dashboard refreshes 500
+[matrix] 10/28 S1 lstm seed 46 dt 100 ms steady n 5000 (est. 8m31s)
+[matrix]   run 94: complete, processed 5000/5000, malformed 0, took 8m22s, pacing lateness p99 0.15 ms, dashboard refreshes 500
+[matrix] 11/28 S2 iforest seed 46 dt 10 ms steady n 5000 (est. 1m17s)
+[matrix]   run 95: complete, processed 5000/5000, malformed 0, took 1m20s, pacing lateness p99 2.14 ms, dashboard refreshes 80
+[matrix] 12/28 S2 rf seed 46 dt 10 ms steady n 5000 (est. 3m26s)
+[matrix]   run 96: complete, processed 5000/5000, malformed 0, took 4m17s, pacing lateness p99 2.29 ms, dashboard refreshes 256
+[matrix] 13/28 S2 lstm seed 46 dt 10 ms steady n 5000 (est. 1m01s)
+[matrix]   run 97: complete, processed 5000/5000, malformed 0, took 0m52s, pacing lateness p99 2.74 ms, dashboard refreshes 51
+[matrix] 14/28 S3 iforest seed 46 dt 50 ms steady n 5000 (est. 4m13s)
+[matrix]   run 98: complete, processed 5000/5000, malformed 0, took 4m11s, pacing lateness p99 0.55 ms, dashboard refreshes 250
+[matrix] 15/28 S3 rf seed 46 dt 50 ms steady n 5000 (est. 4m15s)
+[matrix]   run 99: complete, processed 5000/5000, malformed 0, took 4m15s, pacing lateness p99 1.92 ms, dashboard refreshes 254
+[matrix] 16/28 S3 lstm seed 46 dt 50 ms steady n 5000 (est. 4m21s)
+[matrix]   run 100: complete, processed 5000/5000, malformed 0, took 4m12s, pacing lateness p99 0.48 ms, dashboard refreshes 250
+[matrix] 17/28 S3 iforest seed 46 dt 20 ms steady n 5000 (est. 1m43s)
+[matrix]   run 101: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 2.23 ms, dashboard refreshes 101
+[matrix] 18/28 S3 rf seed 46 dt 20 ms steady n 5000 (est. 3m26s)
+[matrix]   run 102: complete, processed 5000/5000, malformed 0, took 4m15s, pacing lateness p99 2.67 ms, dashboard refreshes 253
+[matrix] 19/28 S3 lstm seed 46 dt 20 ms steady n 5000 (est. 1m51s)
+[matrix]   run 103: complete, processed 5000/5000, malformed 0, took 1m42s, pacing lateness p99 0.27 ms, dashboard refreshes 100
+[matrix] 20/28 S3 iforest seed 46 dt 5 ms steady n 5000 (est. 1m17s)
+[matrix]   run 104: complete, processed 5000/5000, malformed 0, took 1m22s, pacing lateness p99 1.61 ms, dashboard refreshes 80
+[matrix] 21/28 S3 rf seed 46 dt 5 ms steady n 5000 (est. 3m26s)
+[matrix]   run 105: complete, processed 5000/5000, malformed 0, took 4m15s, pacing lateness p99 5.92 ms, dashboard refreshes 254
+[matrix] 22/28 S3 lstm seed 46 dt 5 ms steady n 5000 (est. 0m58s)
+[matrix]   run 106: complete, processed 5000/5000, malformed 0, took 0m44s, pacing lateness p99 2.37 ms, dashboard refreshes 42
+[matrix] 23/28 S3 iforest seed 46 dt 1 ms steady n 5000 (est. 1m17s)
+[matrix]   run 107: complete, processed 5000/5000, malformed 0, took 1m19s, pacing lateness p99 0.50 ms, dashboard refreshes 77
+[matrix] 24/28 S3 rf seed 46 dt 1 ms steady n 5000 (est. 3m26s)
+[matrix]   run 108: complete, processed 5000/5000, malformed 0, took 4m15s, pacing lateness p99 0.40 ms, dashboard refreshes 253
+[matrix] 25/28 S3 lstm seed 46 dt 1 ms steady n 5000 (est. 0m58s)
+[matrix]   run 109: complete, processed 5000/5000, malformed 0, took 0m42s, pacing lateness p99 1.39 ms, dashboard refreshes 40
+[matrix] 26/28 S4 iforest seed 46 dt 100 ms burst n 2000 (est. 1m43s)
+[matrix]   run 110: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 30.31 ms, dashboard refreshes 99
+[matrix] 27/28 S4 rf seed 46 dt 100 ms burst n 2000 (est. 1m55s)
+[matrix]   run 111: complete, processed 2000/2000, malformed 0, took 2m05s, pacing lateness p99 42.41 ms, dashboard refreshes 124
+[matrix] 28/28 S4 lstm seed 46 dt 100 ms burst n 2000 (est. 1m51s)
+[matrix]   run 112: complete, processed 2000/2000, malformed 0, took 1m42s, pacing lateness p99 49.84 ms, dashboard refreshes 100
+[matrix] finished: 28 runs, 0 not complete

@@ -2,7 +2,7 @@
 
 A working list for the Chapter Four write-up: what the implementation added to the Chapter Three design, where it departs from it and why, and what has been found along the way. Append new entries as work goes on (see CLAUDE.md). Every figure has a source file in the repository, so the chapter can cite it.
 
-Last updated: 2026-11-15 (Phase 6 §8.2 run_matrix; dashboard UI pass §2.15, §3.8).
+Last updated: 2026-11-16 (main matrix set finished; §3.9).
 
 ## 1. Database fields added beyond Table 3.10
 
@@ -145,3 +145,15 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - **Before** (old UI, run 1 in ui_ab.db): L p50 63.2 ms, **p95 184.5 ms**, p99 1,916 ms, max 2,221 ms; 11.9% of records over 100 ms. Mean components: t_tx 45.4, t_pre 0.20, t_inf 63.2, t_ser 1.2 ms. Dashboard delay median 272 ms (475 refreshes). The 5-minute load average was 3.5–4.6 on 4 threads, so the machine was already busy. Compare the RF run 1 in `db/nids.db` (old UI, Brave): p95 116.9 ms, t_inf ≈ 42 ms.
 - **After** (new UI, run 2 in ui_ab.db): **invalid**. A second NIDS stack (`run.py` on 9100/8501, dashboard in Brave) was started during it and ran an Isolation Forest run (db/nids.db run 2, 05:02–05:10 UTC), and VS Code restarted. Load average reached 9.9–11. Mean t_inf doubled to 126 ms, the backlog grew, and L reached ~160 s (p95 157,730 ms). This measures the contention, not the UI. The overlap works both ways: **db/nids.db run 2 (IF) ran while this RF run loaded the CPU**, so it should not be used as an experiment run.
 - Conclusion: **no valid evidence either way** about whether p95 changed. The query load is unchanged (above), so a difference would have to come from rendering (Styler, two more metric rows, chip column). To settle it, repeat the pair back to back on a quiet machine (one stack, no other browser on the dashboard), ideally two or three pairs given the run-to-run spread seen here (p95 116.9 vs 184.5 ms on the same old UI).
+
+### 3.9 Main matrix set: dashboard conditions and interruptions (2026-11-16)
+- **Completed:** all 105 runs of the `main` set (S1–S4, dashboard open) are complete. Each has end_reason `complete`, 5,000 (S4: 2,000) PREDICTION rows, 0 malformed and `rate_changes` NULL (MODEL_RUN, run_ids up to 112). Sources: `results/matrix_main.log` (console) and `results/run_matrix_log.csv` (one row per run).
+- **Intended procedure:** during dashboard-open runs the browser tab was kept in the foreground with the screen on, so the dashboard would refresh every 1 s as §3.3.7 specifies.
+- **Browser throttling stopped the matrix twice.** Runs **65** (S3, LSTM, seed 44, Δt 1 ms) and **84** (S3, LSTM, seed 45, Δt 5 ms) completed with **zero** dashboard refreshes: the browser had throttled the tab. run_matrix stopped, as designed, and on resume the configuration was repeated (84 → run 85, 37 refreshes). The zero-refresh runs stay in MODEL_RUN but are not counted as matrix runs.
+- **Measured refresh rate falls short of the design for most accepted runs.** Refreshes per second of run time (rows in `results/dashboard_delay.csv` ÷ (last t4 − first t0)): median **0.14/s** against an expected ~1/s. **60 of 105** accepted runs are below 0.5/s and 41 are below 0.1/s. Runs 47, 48, 70, 71 and 72 (S1, 500 s) received only 14–15 refreshes, roughly one every 35 s, which is consistent with a backgrounded tab or the screen turning off. The acceptance check required only ≥ 1 refresh per run, so these runs passed it.
+  - Consequence: in those runs the dashboard put **less read load on SQLite and the CPU** than the design's 1 s refresh, so their L may be optimistic compared with a fully refreshing dashboard. When comparing with the dashboard-closed S1 set, use the per-run refresh rate as a covariate, or keep only runs near 1/s. Dashboard-delay statistics (§3.3.6) come from far fewer samples in those runs.
+  - Possible fix (not yet applied): require a minimum refresh rate (e.g. ≥ 0.8/s) in run_matrix's acceptance check and rerun the throttled configurations.
+- **Interruptions and resume.** The main set was interrupted by power cuts and resumed with run_matrix's resume logic. The console log shows two interrupted sessions:
+  - During **run 29** (S2, RF, seed 43): it was left with end_reason NULL after 652 records (a hard stop), and run_matrix itself was ended by a signal while waiting.
+  - During **run 49** (S1, LSTM, seed 44): stopped cleanly by a signal (end_reason `stopped`, 1,860 records).
+  - Both were repeated on resume, after the services had been restarted (the first resume attempt was refused because they were not running). Including the two throttling stops, the set was run in **five sessions** (resumes at 25, 44, 59 and 77 runs complete). No completed run was lost or repeated.
