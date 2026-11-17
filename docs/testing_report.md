@@ -1,6 +1,6 @@
 # Testing report (plan §9, Chapter 3 §3.4)
 
-Date: 2026-11-16 (first run, commit `50f7b98`); test fixes and re-run 2026-11-17 (§4)
+Date: 2026-11-17 (final run, commit `c7594ca`). First run 2026-11-16 on commit `50f7b98`; fixes in §4.
 Environment: Ubuntu, Python 3.12.3, pytest 9.2.0, CPU only (the test machine recorded in
 TEST_ENVIRONMENT: i7-5500U, 4 logical CPUs, HDD).
 
@@ -8,7 +8,7 @@ TEST_ENVIRONMENT: i7-5500U, 4 logical CPUs, HDD).
 
 | Item | Outcome |
 |---|---|
-| Full pytest suite (`python -m pytest`, 126 tests, 7 min 55 s, 2026-11-17) | **126 passed, 0 failed, 0 skipped** (first run 2026-11-16: 124 passed, 2 failed; fixed in §4). Added afterwards: `test_system_metrics.py::test_nfr2_judged_on_sustained_rate_not_capped_throughput` (ST1 supp., NFR2), passing with the rest of that file (10 passed). |
+| Full pytest suite (`python -m pytest`, 127 tests, 7 min 21 s, 2026-11-17) | **127 passed, 0 failed, 0 skipped.** History: 2026-11-16, 124 passed / 2 failed of 126; 2026-11-17 first re-run after fixes, 125 / 1 (a third fault, §4.3); then 126 / 0. Test 127 (NFR2 sustained-rate check) was added with commit `e70d005`. |
 | Plan §9 test IDs (UT1–UT5, IT1–IT3, ST1–ST3) | **10 of 11 met**, with every supporting test passing. UAT is pending. |
 | ST2: sockets bound to loopback only (`netstat -an`) | **PASS.** All four listening sockets are on 127.0.0.1 (§5). |
 | ST3: S1 configuration re-run gives the same labels | **PASS.** Run 6 replayed twice: 5,000 of 5,000 labels identical, score and confidence differences 0.0 (§6). |
@@ -32,7 +32,7 @@ pipeline. None affected a measured result.
 | IT1 | Integration | FR1–4, FR11 | Counts match; no negative intervals | `test_200_record_run_via_control` ×3 (IF, RF, LSTM): 200 sent = 200 processed = 200 PREDICTION rows, 0 malformed, 0 NULL t4, 0 negative intervals. Clock check (1,000 @ 100 ms, IF): every t_tx > 0, median 0.188 ms. | 11 | **PASS** |
 | IT2 | Integration | FR2, FR8 | State changes as expected | Start/Stop from the dashboard sidebar locks and unlocks the settings, with Δt still live. Model switch: dashboard model selector, and IF → RF on the same processes. Stop mid-run gives end_reason `stopped` with all t4 written. Rate change 20 → 5 ms changes the median gap from 20.00 to 5.00 ms and is recorded in MODEL_RUN.rate_changes. A rate change is refused in burst mode, and busy or invalid commands are refused. | 21 | **PASS** |
 | IT3 | Integration | §3.3.11 | 100% | Engine path, 500 rows × 5 model/task pairs: 0 label mismatches against the offline files. Streamed: **105/105** main-set runs at 100% agreement, 0 disagreeing records over 480,000 predictions (`results/latency_summary.csv`, `agreement`, `n_disagree`). | 2 (+5 shared with UT3) | **PASS** |
-| ST1 | System | NFR1, NFR2 | Results produced; NFR1/2 verdicts stated | Main set complete: S1 15, S2 15, S3 60, S4 15 included runs. `results/nfr_verdicts.csv`: **NFR1 PASS** for IF (p95 36.2 ± 9.3 ms), RF (67.4 ± 16.3 ms) and LSTM (18.5 ± 1.7 ms). **NFR2 FAIL** on the sustained-rate rule (S2 p95(L) ≤ 10 ms and backlog not growing, 0/5 seeds each): IF p95 20.9 s, RF 145 s, both with growing backlogs; S3 max sustainable 20 and 10 records/s. LSTM: p95 267 ms > 10 ms although Eq. 3.7 throughput is 99.9/s, which S2's 100/s offered rate caps (reported as a finding; chapter4_notes §3.15). Dashboard-closed S1 set complete (runs 115–129); `dashboard_open_vs_closed.csv` filled in (chapter4_notes §3.13). Streamed agreement 120/120 runs. | 16 | **PASS** (results and verdicts stated) |
+| ST1 | System | NFR1, NFR2 | Results produced; NFR1/2 verdicts stated | Main set complete: S1 15, S2 15, S3 60, S4 15 included runs. `results/nfr_verdicts.csv`: **NFR1 PASS** for IF (p95 36.2 ± 9.3 ms), RF (67.4 ± 16.3 ms) and LSTM (18.5 ± 1.7 ms). **NFR2 FAIL** on the sustained-rate rule (S2 p95(L) ≤ 10 ms and backlog not growing, 0/5 seeds each): IF p95 20.9 s, RF 145 s, both with growing backlogs; S3 max sustainable 20 and 10 records/s. LSTM: p95 267 ms > 10 ms although Eq. 3.7 throughput is 99.9/s, which S2's 100/s offered rate caps (reported as a finding; chapter4_notes §3.15). Dashboard-closed S1 set complete (runs 115–129); `dashboard_open_vs_closed.csv` filled in (chapter4_notes §3.13). Streamed agreement 120/120 runs. | 17 | **PASS** (results and verdicts stated) |
 | ST2 | System | NFR6 | Only 127.0.0.1 | `netstat -an` with the full system running: 9100, 9101, 9102 and 8501 all on 127.0.0.1 (§5). `test_service_ports_bind_loopback_only` agrees. | 2 | **PASS** |
 | ST3 | System | NFR4 | Identical labels | S1 run 6 (LSTM binary, seed 42) replayed offline twice in fresh processes: stream order identical, 0 of 5,000 labels differ, max score and confidence difference 0.0 (§6). | manual | **PASS** |
 | UAT | Acceptance | NFR5 | Done without help; Likert questionnaire | `docs/uat/instructions.md` / `.pdf` and `docs/uat/questionnaire.md` / `.pdf` | — | Pending |
@@ -179,8 +179,19 @@ main test. "(+IT)" means a unit-level ID that is also checked through the live s
 | 124 | `test_train_rf.py::test_train_task_both_end_to_end` | - (Phase 2) | NFR4 | RF binary + multi end to end (small) | PASSED |
 | 125 | `test_train_rf.py::test_load_partitions_never_reads_test` | - (Phase 2) | controls 5/6 | Training never reads the test partition | PASSED |
 | 126 | `test_train_rf.py::test_done_ten_bundles_and_configs` | - (Phase 2) | NFR4 | Ten RF bundles and configs exist | PASSED |
+| 127 | `test_system_metrics.py::test_nfr2_judged_on_sustained_rate_not_capped_throughput` | ST1 (supp.) | NFR2 | NFR2 verdict follows p95(L) ≤ Δt and backlog not growing (plan §8.3), not Eq. 3.7 throughput capped at the offered 100/s | PASSED |
 
 ## 4. Failures
+
+Which side was wrong, and what was changed:
+
+| § | Test | Wrong side | Change |
+|---|---|---|---|
+| 4.1 | `test_no_sql_built_from_strings` | **Test** (too strict: false positive on correct, parameterised code) | Code layout only: the query moved to a module-level constant so the unchanged check accepts it. Behaviour and SQL text unchanged. |
+| 4.2 | `test_headless_run_records_dashboard_state_and_resumes` | **Test** (isolation: two tests shared a scenario label) | Test: the dashboard test uses `dash-test-S1` |
+| 4.3 | `test_buffer_check_refuses_small_buffers` | **Test** (read the real `db/nids.db`) | Test: empty temporary `--db` / `--delay-csv` |
+
+No pipeline code was at fault.
 
 ### 4.1 `test_storage.py::test_no_sql_built_from_strings` (NFR6 static check)
 
