@@ -181,10 +181,38 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - **S4 burst:** peak L IF 14.1 ± 1.6 s, RF 43.7 ± 6.9 s, LSTM 7.5 ± 1.1 s. Recovery IF **16.3 ± 2.1 s**, LSTM **8.7 ± 1.2 s** (5/5 each). **RF did not recover within the run (0/5):** the 1,000-record backlog at ~44 ms per record (~44 s of work) drains at only ~56 ms per 100 ms tail record, which needs ~77 s against the 50 s tail.
 - **§8.4 agreement: 105/105 runs at 100%**, 0 disagreeing records. Streamed labels equal the offline labels for the same model, seed and row_index, so online and offline preprocessing match (control 8).
 - **Dashboard refresh:** 60 of 105 runs are below 0.5 refreshes/s (`low_refresh` column; §3.9).
-- **Open vs closed (S1):** skipped until the closed set is run. Re-run `python -m nids.evaluation.system_metrics` afterwards; it overwrites every output.
+- **Open vs closed (S1):** see §3.13 (closed set completed 2026-11-17).
 
 ### 3.11 Testing (plan §9; 2026-11-16, `docs/testing_report.md`)
 - Full suite: **124 passed, 2 failed** of 126 (9 min 11 s). Both failures are test faults, not pipeline faults, and no code was changed: (a) the NFR6 static SQL check flags a literal, parameterised query held in a local variable in `system_metrics.load_records` (false positive); (b) the run_matrix headless test counts an `rm-test-S1` run created earlier in the session by a dashboard test that uses the same label. It passes on its own.
 - **ST2 PASS:** with `run.py` and the dashboard running, `netstat -an` shows only 127.0.0.1 listeners (9100, 9101, 9102, 8501).
 - **ST3 PASS:** S1 run 6 (LSTM binary, seed 42) replayed offline twice through Preprocessor + Detector: 0 of 5,000 labels differ, and score/confidence differences are 0.0.
 - UT3's "warm-up for the first W−1 records" clause does not apply under formulation B (§2.6). UAT materials are in `docs/uat/`, and UAT has not been run yet.
+
+### 3.12 Closed set, first attempt: runs 113 and 114 invalidated (2026-11-16/17)
+- The first closed-set attempt (22:37–22:57 +0100, 16 Nov) stopped at run 2/15 with `TimeoutError: timed out` (`results/matrix_closed.log`, `db/nids.services.log`). Run 114 (S1, RF, seed 42) had completed, 5,000/5,000. The error was a 10 s control-channel request after the run: the streamer could not answer. The engine had already closed the data socket at 22:55:04.7, but the streamer took 21.5 s to run the next three statements, and both services then needed more than 15 s to exit (killed). Cause: host memory pressure with swapping to the HDD. sar 22:50–23:00: swap-out 510 pages/s (≈5 before), swap +940 MB (43.8 → 66.3%), iowait 37%, sda 73% util, commit ≈190%. No OOM kill. The other heavy processes running were Brave, Spotify, VS Code and snap-store.
+- Run 113 (S1, IF, seed 42) also ran under background load: one storage stall of 11 s at 22:43:08–22:43:19 (t_ser up to 961 ms) right after a snap-store launch. p95 105.4 / p99 1,757 / max 2,645 ms, against 51.2 / 96 / 333 ms for the dashboard-open run 4. Run 114: p99 584 ms vs 179 ms for run 5, with storage stalls every 30–60 s.
+- Neither run overlapped the testing-report session (05:52–06:24 the same day).
+- **Both runs relabelled `scenario = 'invalid-S1'`** (end_reason stays `complete`; PREDICTION rows kept). run_matrix therefore repeats them and system_metrics ignores them. Backup before the change: `db/nids.before_invalidate_113_114.db`. Run 114 never reached `results/run_matrix_log.csv`; run 113's row there is left as an append-only record.
+- Robustness gap (not fixed): one 10 s status timeout aborts the whole matrix even when the run finished. Before the rerun, close other heavy applications and check swap (`free -h`) so the closed set runs on a quiet machine.
+
+### 3.13 Dashboard open vs closed, S1 (2026-11-17, `results/dashboard_open_vs_closed.csv`)
+- **Closed set completed:** runs **115–129** (S1, Δt 100 ms, steady, 5,000 records, seeds 42–46 × IF/RF/LSTM). All 15 are complete with 0 malformed, finished in one session (≈8m22s each, ending 02:29 +0100, 17 Nov; `results/matrix_closed.log`). **0 dashboard refreshes** were logged in every closed run, which confirms the dashboard really was closed. Invalidated runs 113/114 (§3.12) are excluded. §8.4 agreement is now **120/120 runs at 100%**.
+- **p95(L), mean ± SD over 5 seeds (open = main set, §3.10):**
+
+  | Model | Open (all) | Open, refresh ≥ 0.5/s | Closed | Open − closed | Mean t_inf open → closed |
+  |---|---|---|---|---|---|
+  | IF | 36.2 ± 9.3 ms | 36.1 ms (n = 3) | 39.6 ± 0.8 ms | −3.4 ms | 20.6 → 21.7 ms |
+  | RF | 67.4 ± 16.3 ms | 83.9 ms (n = 2) | 51.2 ± 0.9 ms | **+16.2 ms** | 44.8 → 39.7 ms |
+  | LSTM | 18.5 ± 1.7 ms | 19.1 ms (n = 2) | 24.6 ± 0.9 ms | −6.0 ms | 10.9 → 12.7 ms |
+
+- **Finding:** only **RF** shows a dashboard cost that holds across runs. With the dashboard open its p95 is 16 ms higher (24 ms higher in the runs near the designed 1/s refresh) and t_inf is 5 ms higher. This fits RF being the most CPU-bound detector on a 4-thread CPU that it shares with Streamlit and the browser. For **IF** the difference is within the open-set spread. For **LSTM** the closed runs are *slower* (+6 ms p95, +1.8 ms t_inf), so that difference cannot be blamed on the dashboard.
+- **Confounding (state in Ch. 4):**
+  - Open and closed runs were not interleaved. The open set ran over five sessions with varying refresh rates (§3.9). The closed set ran in one overnight session on a quiet machine.
+  - Session effects such as background load, CPU frequency and page-cache state therefore mix with the dashboard effect. The closed SDs (≈0.9 ms) are 2–18× smaller than the open SDs, which is consistent with this.
+  - The open subset near 1/s has only 2–3 runs per model.
+  - Conclusion: dashboard overhead at a 1 s refresh is **small next to the 100 ms budget**. It is measurable for RF and not separable from session noise for IF or LSTM.
+- **NFR1 unchanged:** it remains PASS for all three models. NFR1 is judged on dashboard-open runs, as specified. The closed runs pass as well (worst seed p95 52.4 ms, RF seed 43). NFR2 verdicts are unchanged because they come only from S2.
+- **The latency spikes are not caused by the dashboard:** closed-run max L is still 244–453 ms (RF p99 121–170 ms). The isolated spikes seen in §3.10 therefore come from the storage path (WAL/HDD), not from dashboard reads.
+- **Run 114 vs its repeat, run 116 (RF, seed 42):** p99 584 → 142 ms. This supports the §3.12 diagnosis that the first attempt was distorted by host load.
+

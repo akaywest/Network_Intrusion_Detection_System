@@ -138,7 +138,7 @@ plan's test IDs and the latest results are in `docs/testing_report.md`.
 | `results/latency_summary.csv`, `system_summary.csv`, `sustainable_rate.csv`, `nfr_verdicts.csv`, `dashboard_open_vs_closed.csv` | system metrics |
 | `results/per_record/latency_records.parquet` | per-record latency and backlog (not committed) |
 | `results/plots/` | latency CDF (S1), component bars (S1), rate search (S3), burst (S4) |
-| `results/run_matrix_log.csv`, `matrix_main.log`, `dashboard_delay.csv` | experiment run log and dashboard refresh delays |
+| `results/run_matrix_log.csv`, `matrix_main.log`, `matrix_closed.log`, `dashboard_delay.csv` | experiment run log and dashboard refresh delays |
 | `db/nids.db` | SQLite log of every run (not committed) |
 | `docs/chapter4_notes.md` | running notes on deviations and findings for Chapter Four |
 | `docs/uat/` | user acceptance test instruction sheet and questionnaire (Markdown + PDF) |
