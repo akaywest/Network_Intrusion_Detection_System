@@ -123,8 +123,9 @@ python -m pytest -m "not slow"    # skip the long-running checks
 ```
 
 The integration tests start their own engine and streamer on free loopback ports with
-a temporary database, so they never touch `db/nids.db`. The mapping of tests to the
-plan's test IDs and the latest results are in `docs/testing_report.md`.
+a temporary database, so they never touch `db/nids.db`. Latest full run (2026-11-17):
+**127 passed, 0 failed** in about 7.5 minutes. The mapping of tests to the plan's test
+IDs and the full results are in `docs/testing_report.md`.
 
 ## Where outputs go
 
