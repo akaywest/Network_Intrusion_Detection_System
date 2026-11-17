@@ -1,7 +1,7 @@
-nfr,model,rule,n_seeds,seeds_pass,value_mean,value_sd,unit,verdict,required
-NFR1,iforest,"p95(L) <= 100 ms in S1 (dt 100 ms, dashboard open)",5,5,36.22956778,9.25698342620518,ms (p95 L),PASS,yes
-NFR2,iforest,sustains 100 records/s: S2 (dt 10 ms) p95(L) <= 10 ms and backlog not growing,5,0,70.7681587670717,11.916309050346033,records/s (Eq. 3.7),FAIL,yes
-NFR1,rf,"p95(L) <= 100 ms in S1 (dt 100 ms, dashboard open)",5,5,67.44030286000002,16.255463818284593,ms (p95 L),PASS,yes
-NFR2,rf,sustains 100 records/s: S2 (dt 10 ms) p95(L) <= 10 ms and backlog not growing,5,0,24.78150633998112,3.5695944692869648,records/s (Eq. 3.7),FAIL,yes
-NFR1,lstm,"p95(L) <= 100 ms in S1 (dt 100 ms, dashboard open)",5,5,18.52757323,1.748753045713912,ms (p95 L),PASS,yes
-NFR2,lstm,sustains 100 records/s: S2 (dt 10 ms) p95(L) <= 10 ms and backlog not growing,5,0,99.92688481419853,0.14660304938477461,records/s (Eq. 3.7),FAIL,no (finding)
+nfr,model,rule,n_seeds,seeds_pass,value_mean,value_sd,unit,verdict,required,backlog_growing_runs,backlog_growth_mean,max_sustainable_rps,throughput_mean_rps
+NFR1,iforest,"p95(L) <= 100 ms in S1 (dt 100 ms, dashboard open)",5,5,36.22956778,9.25698342620518,ms (p95 L),PASS,yes,,,,
+NFR2,iforest,sustains 100 records/s: S2 (dt 10 ms) p95(L) <= 10 ms and backlog not growing,5,0,20914.03505782,11966.06531570476,ms (p95 L at dt 10 ms; must be <= 10),FAIL,yes,5.0,1284.3151020408163,20.0,70.7681587670717
+NFR1,rf,"p95(L) <= 100 ms in S1 (dt 100 ms, dashboard open)",5,5,67.44030286000002,16.255463818284593,ms (p95 L),PASS,yes,,,,
+NFR2,rf,sustains 100 records/s: S2 (dt 10 ms) p95(L) <= 10 ms and backlog not growing,5,0,145285.55830389,31126.830375983434,ms (p95 L at dt 10 ms; must be <= 10),FAIL,yes,5.0,3360.821224489796,10.0,24.78150633998112
+NFR1,lstm,"p95(L) <= 100 ms in S1 (dt 100 ms, dashboard open)",5,5,18.52757323,1.748753045713912,ms (p95 L),PASS,yes,,,,
+NFR2,lstm,sustains 100 records/s: S2 (dt 10 ms) p95(L) <= 10 ms and backlog not growing,5,0,267.35629502,41.976815222023944,ms (p95 L at dt 10 ms; must be <= 10),FAIL,no (finding),2.0,-1.4142857142857146,20.0,99.92688481419853

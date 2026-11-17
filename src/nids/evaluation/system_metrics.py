@@ -31,8 +31,12 @@ whose mean backlog is ~0.01, as growing after a single storage stall
 the dashboard open. A model's sustainable dt is the smallest dt at which all five
 seeds pass and every larger dt passes too; 1000/dt is the max sustainable throughput.
 NFR verdicts: NFR1 p95(L) <= 100 ms in S1; NFR2 the S2 (dt = 10 ms, 100 records/s)
-pass rule above, required for IF and RF, reported as a finding for the LSTM. Verdict
-PASS when all seeds pass, FAIL when the seed-mean fails, MIXED otherwise.
+pass rule above (sustained-rate criterion, plan §8.3), required for IF and RF, reported
+as a finding for the LSTM. Verdict PASS when all seeds pass, FAIL when the seed-mean
+fails, MIXED otherwise. NFR2's value is the S2 p95(L) against the 10 ms bound, with the
+backlog evidence and the S3 max sustainable rate beside it. Eq. 3.7 throughput is kept
+only as context: S2 offers exactly 100 records/s, so it cannot exceed ~100 and does not
+show whether the rate was sustained (chapter4_notes §3.15).
 
 Outputs (overwritten on every run, so it can be re-run after the closed set):
   results/latency_summary.csv         one row per run (excluded runs flagged)
@@ -297,6 +301,7 @@ def verdict(passes: pd.Series, mean_ok: bool) -> str:
 
 def nfr_verdicts(ls: pd.DataFrame, backlog_tol: float = 0.0) -> pd.DataFrame:
     inc = ls[ls.included & (ls.dashboard_open == 1)]
+    sr = sustainable_rate(ls)
     rows = []
     for m in MODELS:
         s1 = inc[(inc.scenario == "S1") & (inc.model == m)]
@@ -311,15 +316,21 @@ def nfr_verdicts(ls: pd.DataFrame, backlog_tol: float = 0.0) -> pd.DataFrame:
         s2 = inc[(inc.scenario == "S2") & (inc.model == m)]
         mean_ok = (s2.L_p95_ms.mean() <= NFR2_DT_MS
                    and s2.backlog_growth.mean() <= backlog_tol)
+        msr = sr.loc[sr.model == m, "max_sustainable_rps"]
+        # Judged on the sustained-rate criterion (plan §8.3), not on Eq. 3.7: S2 offers
+        # exactly 100 records/s, so throughput is capped there whether or not it keeps up.
         rows.append({"nfr": "NFR2", "model": m,
                      "rule": "sustains 100 records/s: S2 (dt 10 ms) p95(L) <= 10 ms and "
                              "backlog not growing",
                      "n_seeds": len(s2), "seeds_pass": int(s2.sustained.sum()),
-                     "value_mean": s2.throughput_rps.mean(),
-                     "value_sd": s2.throughput_rps.std(ddof=1),
-                     "unit": "records/s (Eq. 3.7)",
+                     "value_mean": s2.L_p95_ms.mean(), "value_sd": s2.L_p95_ms.std(ddof=1),
+                     "unit": "ms (p95 L at dt 10 ms; must be <= 10)",
                      "verdict": verdict(s2.sustained, mean_ok),
-                     "required": "no (finding)" if m == "lstm" else "yes"})
+                     "required": "no (finding)" if m == "lstm" else "yes",
+                     "backlog_growing_runs": int(s2.backlog_growing.sum()),
+                     "backlog_growth_mean": s2.backlog_growth.mean(),
+                     "max_sustainable_rps": msr.iloc[0] if len(msr) else np.nan,
+                     "throughput_mean_rps": s2.throughput_rps.mean()})
     return pd.DataFrame(rows)
 
 
@@ -479,7 +490,9 @@ def print_tables(ls: pd.DataFrame, tables: dict) -> None:
     print(piv.to_string())
     print("\nNFR verdicts")
     print(tables["nfr_verdicts"][["nfr", "model", "n_seeds", "seeds_pass", "value_mean",
-                                  "value_sd", "unit", "verdict", "required"]]
+                                  "value_sd", "unit", "verdict", "required",
+                                  "backlog_growing_runs", "max_sustainable_rps",
+                                  "throughput_mean_rps"]]
           .to_string(index=False))
     print("\n§8.4 agreement (streamed vs offline labels): "
           f"{(inc.agreement == 1).sum()}/{len(inc)} runs at 100%, "

@@ -117,3 +117,28 @@ def test_sustainable_rate_needs_all_seeds_and_every_larger_dt():
     rf = sr[sr.model == "rf"]
     assert rf.sustainable_dt_ms.iloc[0] == 20.0
     assert rf.max_sustainable_rps.iloc[0] == pytest.approx(50.0)
+
+
+def test_nfr2_judged_on_sustained_rate_not_capped_throughput():
+    """S2 offers exactly 100 records/s, so Eq. 3.7 throughput ~100 must not pass NFR2:
+    the verdict follows p95(L) <= dt and a non-growing backlog (plan §8.3), and the
+    reported value is the S2 p95."""
+    rows = []
+    for seed in range(42, 47):
+        for dt in sm.RATE_STEPS:
+            sc = "S1" if dt == 100 else "S2" if dt == 10 else "S3"
+            ok = dt >= 50                                # keeps up only down to 50 ms
+            rows.append(dict(included=True, dashboard_open=1, mode="steady", scenario=sc,
+                             model="lstm", seed=seed, dt_ms=dt, sustained=ok,
+                             L_p95_ms=5.0 if ok else 250.0, backlog_growing=not ok,
+                             backlog_growth=0.0 if ok else 30.0,
+                             throughput_rps=min(1000 / dt, 99.9)))
+    nfr2 = sm.nfr_verdicts(pd.DataFrame(rows), backlog_tol=1.0).query(
+        "nfr == 'NFR2' and model == 'lstm'")
+    r = nfr2.iloc[0]
+    assert r.throughput_mean_rps == pytest.approx(99.9)   # looks like 100/s ...
+    assert r.verdict == "FAIL" and r.seeds_pass == 0      # ... but is not sustained
+    assert r.value_mean == pytest.approx(250.0) and r.unit.startswith("ms")
+    assert r.backlog_growing_runs == 5
+    assert r.max_sustainable_rps == pytest.approx(20.0)
+

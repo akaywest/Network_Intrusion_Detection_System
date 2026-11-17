@@ -175,7 +175,7 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 
 ### 3.10 System metrics, main set (dashboard open; 2026-11-16, `results/latency_summary.csv`, `system_summary.csv`, `nfr_verdicts.csv`)
 - **NFR1 PASS for all three models** (S1, p95 of L, mean ± SD over 5 seeds, 5/5 seeds each): IF **36.2 ± 9.3 ms**, RF **67.4 ± 16.3 ms**, LSTM **18.5 ± 1.7 ms**. p99: 74.8 / 161.6 / 37.7 ms, so RF's tail exceeds 100 ms. Max L 295–373 ms for all models: isolated spikes (§3.3 WAL/HDD), visible in `plots/burst_S4.png` before the burst as well.
-- **NFR2 FAIL for IF and RF** (S2, Δt 10 ms, 0/5 seeds sustain): Eq. 3.7 throughput IF **70.8 ± 11.9/s**, RF **24.8 ± 3.6/s**, and the backlog grows to ~1,400 and ~3,800 records. **LSTM (finding):** throughput 99.9/s and p50 9.6 ms, but p95 267 ms > 10 ms with a backlog of up to ~40 records, so it also fails the p95 ≤ Δt rule at exactly 100 records/s.
+- **NFR2 FAIL for IF and RF** (S2, Δt 10 ms, 0/5 seeds sustain; evidence restated on the sustained-rate criterion in §3.15): Eq. 3.7 throughput IF **70.8 ± 11.9/s**, RF **24.8 ± 3.6/s**, and the backlog grows to ~1,400 and ~3,800 records. **LSTM (finding):** throughput 99.9/s and p50 9.6 ms, but p95 267 ms > 10 ms with a backlog of up to ~40 records, so it also fails the p95 ≤ Δt rule at exactly 100 records/s.
 - **Inference under dashboard load is slower than the standalone benchmark:** mean t_inf in S1 IF 20.6, RF 44.8, LSTM 10.9 ms vs 11.8 / 37.2 / 6.5 ms in `detector_timing.json` (§3.2). This is consistent with a shared 4-thread CPU. The open-vs-closed comparison will quantify it.
 - **S3 sustainable rate** (all 5 seeds, 1-record backlog tolerance, §2.17): **IF 50 ms (20 records/s), LSTM 50 ms (20 records/s), RF 100 ms (10 records/s).** At Δt ≤ 20 ms (IF, LSTM) and ≤ 50 ms (RF) the queue grows without bound, and p95 reaches tens to hundreds of seconds (`sustainable_rate.csv`, `plots/rate_search_S3.png`).
 - **S4 burst:** peak L IF 14.1 ± 1.6 s, RF 43.7 ± 6.9 s, LSTM 7.5 ± 1.1 s. Recovery IF **16.3 ± 2.1 s**, LSTM **8.7 ± 1.2 s** (5/5 each). **RF did not recover within the run (0/5):** the 1,000-record backlog at ~44 ms per record (~44 s of work) drains at only ~56 ms per 100 ms tail record, which needs ~77 s against the 50 s tail.
@@ -221,4 +221,20 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
   - NFR6 static check: the `load_records` query moved to the module-level constant `RECORDS_SQL` in `system_metrics.py` (SQL text unchanged; checker not loosened).
   - Dashboard sidebar test: it uses its own scenario label, `dash-test-S1`, so the run_matrix headless test no longer counts its run.
 - **Third fault found on the re-run:** `test_buffer_check_refuses_small_buffers` read the real `db/nids.db`, because it gave no `--db`. With the closed set now complete, `run_matrix.main()` returned 0 (nothing pending) before the buffer preflight. The test only passed while runs were outstanding. It now uses an empty temporary DB. Lesson for Ch. 4: tests must not depend on the state of the experiment database.
+
+### 3.15 NFR2 judged on the sustained-rate criterion, not Eq. 3.7 throughput (2026-11-17)
+- **Problem:** S2 emits at exactly Δt = 10 ms, i.e. 100 records/s. Eq. 3.7 throughput (records ÷ (last t4 − first t0)) therefore cannot go above ~100/s however fast the engine is. A value of 99.9/s does not show that the rate was *sustained*, because a pipeline that falls behind and queues can still post ~99.9/s. Before this change, `nfr_verdicts.csv` reported that throughput as NFR2's value. That made the LSTM (99.93/s) look like a pass.
+- **Criterion used (plan §8.3, the S3 sustainable-rate rule applied at Δt = 10 ms):** a seed sustains 100 records/s when **p95(L) ≤ 10 ms and the backlog is not growing** (mean backlog in the last 10% of the run − first 10% after warm-up ≤ 1 record, §2.17). The verdict code already used this rule, so **no verdict changed**. What changed is the reported evidence. `value_mean`/`value_sd` are now the S2 p95(L) in ms. New columns: `backlog_growing_runs`, `backlog_growth_mean`, `max_sustainable_rps` (from the S3 search) and `throughput_mean_rps` (Eq. 3.7, context only). Test: `test_nfr2_judged_on_sustained_rate_not_capped_throughput`.
+- **Result (5 seeds each, dashboard open):**
+
+  | Model | p95(L) at Δt 10 ms | Backlog growing | Mean backlog growth | Max sustainable (S3) | Eq. 3.7 (context) | NFR2 |
+  |---|---|---|---|---|---|---|
+  | IF | 20,914 ± 11,966 ms | 5/5 | +1,284 records | 20 records/s (Δt 50 ms) | 70.8/s | **FAIL** (required) |
+  | RF | 145,286 ± 31,127 ms | 5/5 | +3,361 records | 10 records/s (Δt 100 ms) | 24.8/s | **FAIL** (required) |
+  | LSTM | 267 ± 42 ms | 2/5 | −1.4 records | 20 records/s (Δt 50 ms) | 99.9/s | **FAIL** (finding) |
+
+- **Interpretation:**
+  - **IF and RF fall clearly short.** Mean t_inf at Δt 10 ms is 10.7–16.3 ms (IF) and 34.6–50.0 ms (RF). Both exceed the 10 ms emission interval, so the queue grows without bound, and Eq. 3.7 throughput is in effect the service rate.
+  - **The LSTM is at the edge, not over it.** Its mean t_inf of 6.3–7.7 ms is below 10 ms. Its median L is 7–17 ms, and on average its backlog does not grow (3/5 seeds within tolerance; max backlog 31–55 records). It fails on the **tail**: p95 is 230–340 ms in every seed, so the "p95 ≤ Δt" half of the rule fails 5/5. Its throughput of 99.9/s therefore means "kept pace on average", not "sustained within the latency bound".
+  - The highest rate sustained by all seeds under the rule is **20 records/s for IF and LSTM and 10 records/s for RF**, a factor of 5–10 below NFR2's 100 records/s.
 
