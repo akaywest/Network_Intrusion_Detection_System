@@ -59,14 +59,17 @@ def test_burst_block_and_estimate():
     assert rm.estimate_s(s3, CFG, inf) == pytest.approx(5000 * 0.043 + 5, abs=0.01)
 
 
-def test_buffer_check_refuses_small_buffers(monkeypatch):
+def test_buffer_check_refuses_small_buffers(monkeypatch, tmp_path):
     monkeypatch.setattr(rm, "effective_socket_buffers", lambda: {
         "so_sndbuf_effective": 425984, "net_core_wmem_max": 212992,
         "net_core_rmem_max": 212992})
     ok, _, problems = rm.check_buffers()
     assert not ok and len(problems) == 3
+    # empty (absent) DB so every run is pending; db/nids.db may have the set complete
     code = rm.main(["--set", "closed", "--pause-s", "0", "--engine-ctl-port", "1",
-                    "--streamer-ctl-port", "1", "--dashboard-port", "1"])
+                    "--streamer-ctl-port", "1", "--dashboard-port", "1",
+                    "--db", str(tmp_path / "none.db"),
+                    "--delay-csv", str(tmp_path / "none.csv")])
     assert code == 2
 
 

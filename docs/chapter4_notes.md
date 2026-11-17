@@ -216,3 +216,9 @@ Older databases get `rate_changes` and `end_reason` through `nids.storage.db.ens
 - **The latency spikes are not caused by the dashboard:** closed-run max L is still 244–453 ms (RF p99 121–170 ms). The isolated spikes seen in §3.10 therefore come from the storage path (WAL/HDD), not from dashboard reads.
 - **Run 114 vs its repeat, run 116 (RF, seed 42):** p99 584 → 142 ms. This supports the §3.12 diagnosis that the first attempt was distorted by host load.
 
+### 3.14 Test fixes and full re-run (2026-11-17, `docs/testing_report.md` §4)
+- **Full suite: 126 passed, 0 failed** (7 min 55 s). The two §3.11 failures were fixed in the tests or the query's placement only. No pipeline behaviour changed and no measured result is affected.
+  - NFR6 static check: the `load_records` query moved to the module-level constant `RECORDS_SQL` in `system_metrics.py` (SQL text unchanged; checker not loosened).
+  - Dashboard sidebar test: it uses its own scenario label, `dash-test-S1`, so the run_matrix headless test no longer counts its run.
+- **Third fault found on the re-run:** `test_buffer_check_refuses_small_buffers` read the real `db/nids.db`, because it gave no `--db`. With the closed set now complete, `run_matrix.main()` returned 0 (nothing pending) before the buffer preflight. The test only passed while runs were outstanding. It now uses an empty temporary DB. Lesson for Ch. 4: tests must not depend on the state of the experiment database.
+

@@ -228,7 +228,8 @@ def test_sidebar_mirrors_run_started_by_experiment_script(services, app_env):
     at.sidebar.slider(key="dt_ms").set_value(250)
     at.run()
     c = services.client
-    run_id = c.prepare("rf", "multi", 44, 20.0, "steady", "rm-test-S1", 300,
+    # own label: test_run_matrix counts every rm-test-S1 run in the shared session DB
+    run_id = c.prepare("rf", "multi", 44, 20.0, "steady", "dash-test-S1", 300,
                        dashboard_open=True)
     c.start(run_id, 20.0, "steady", 300)
     try:
@@ -243,7 +244,7 @@ def test_sidebar_mirrors_run_started_by_experiment_script(services, app_env):
                                         sb.radio(key="mode"), at.button(key="start")))
         notes = [i.value for i in sb.info]
         assert any("started by experiment script" in n and f"Run {run_id}" in n
-                   and "rm-test-S1" in n for n in notes), notes
+                   and "dash-test-S1" in n for n in notes), notes
         assert not [w.value for w in sb.warning]           # no Session State warning
     finally:
         c.stop()

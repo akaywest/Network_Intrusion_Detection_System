@@ -129,15 +129,17 @@ def select_runs(runs: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------- per-run metrics
+RECORDS_SQL = ("SELECT p.run_id, p.seq_no, p.flow_id AS row_index, p.is_warmup, "
+               "p.predicted_label, p.t0_emit_ns, p.t4_store_ns, v.t_tx_ms, v.t_pre_ms, "
+               "v.t_inf_ms, v.t_ser_ms, v.L_ms "
+               "FROM prediction p JOIN v_latency v ON v.prediction_id = p.prediction_id "
+               "WHERE p.run_id = ? ORDER BY p.seq_no")
+
+
 def load_records(con: sqlite3.Connection, run_ids: list[int]) -> pd.DataFrame:
     """Per-record timestamps and latency components, one bound query per run (NFR6)."""
-    q = ("SELECT p.run_id, p.seq_no, p.flow_id AS row_index, p.is_warmup, "
-         "p.predicted_label, p.t0_emit_ns, p.t4_store_ns, v.t_tx_ms, v.t_pre_ms, "
-         "v.t_inf_ms, v.t_ser_ms, v.L_ms "
-         "FROM prediction p JOIN v_latency v ON v.prediction_id = p.prediction_id "
-         "WHERE p.run_id = ? ORDER BY p.seq_no")
-    return pd.concat([pd.read_sql_query(q, con, params=(int(r),)) for r in run_ids],
-                     ignore_index=True)
+    return pd.concat([pd.read_sql_query(RECORDS_SQL, con, params=(int(r),))
+                      for r in run_ids], ignore_index=True)
 
 
 def backlog(t0: np.ndarray, t4: np.ndarray) -> np.ndarray:

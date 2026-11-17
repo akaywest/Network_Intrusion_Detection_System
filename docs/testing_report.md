@@ -1,6 +1,6 @@
 # Testing report (plan §9, Chapter 3 §3.4)
 
-Date: 2026-11-16 · Code under test: commit `50f7b98` (no code changed for this report)
+Date: 2026-11-16 (first run, commit `50f7b98`); test fixes and re-run 2026-11-17 (§4)
 Environment: Ubuntu, Python 3.12.3, pytest 9.2.0, CPU only (the test machine recorded in
 TEST_ENVIRONMENT: i7-5500U, 4 logical CPUs, HDD).
 
@@ -8,14 +8,14 @@ TEST_ENVIRONMENT: i7-5500U, 4 logical CPUs, HDD).
 
 | Item | Outcome |
 |---|---|
-| Full pytest suite (`python -m pytest -v`, 126 tests, 9 min 11 s) | **124 passed, 2 failed, 0 skipped** |
-| Plan §9 test IDs (UT1–UT5, IT1–IT3, ST1–ST3) | **10 of 11 met.** UT5 is met on its own pass criterion, but a supporting NFR6 static check in the same file fails. ST1 is met, but one supporting driver test fails because of test ordering. See §4. |
+| Full pytest suite (`python -m pytest`, 126 tests, 7 min 55 s, 2026-11-17) | **126 passed, 0 failed, 0 skipped** (first run 2026-11-16: 124 passed, 2 failed; fixed in §4) |
+| Plan §9 test IDs (UT1–UT5, IT1–IT3, ST1–ST3) | **10 of 11 met**, with every supporting test passing. UAT is pending. |
 | ST2: sockets bound to loopback only (`netstat -an`) | **PASS.** All four listening sockets are on 127.0.0.1 (§5). |
 | ST3: S1 configuration re-run gives the same labels | **PASS.** Run 6 replayed twice: 5,000 of 5,000 labels identical, score and confidence differences 0.0 (§6). |
 | UAT (NFR5) | Not yet run. Materials ready in `docs/uat/` (instruction sheet and questionnaire, Markdown and A4 PDF). |
 
-Both failures are faults in the tests, not in the pipeline. Neither touches a measured
-result (§4).
+All three failures seen (§4) were faults in the tests or test isolation, not in the
+pipeline. None affected a measured result.
 
 ## 2. Results by plan §9 test ID
 
@@ -28,11 +28,11 @@ result (§4).
 | UT2 | Unit | FR5 | All rejected | `test_preprocessor_rejects_malformed`: short or long vector, a string value and a nested list all raise ValueError. "Missing key" applies at message level and is covered by `test_malformed_lines_counted_engine_continues`: not-JSON, wrong length, missing `row_index`, unknown flow and non-object lines were all rejected and counted (malformed_count = 5), the 40 good rows were predicted, and the engine kept serving. | 2 | **PASS** |
 | UT3 | Unit | FR7, FR9 | Types and ranges valid | `test_detector_matches_offline` ×5 (IF; RF binary and multi; LSTM binary and multi): 500 rows each return a valid Result. Types, label set, finite score, confidence in [0, 1] and severity-iff-malicious all hold. Decision rules and the registry are tested separately. **The warm-up clause does not apply:** the LSTM uses formulation B (chapter4_notes §2.6), so it has no W−1 warm-up. The test asserts `warmup is False` for every record. | 11 | **PASS** (warm-up part N/A) |
 | UT4 | Unit | NFR6 | PermissionError | Detector `_path` refuses `../outside.joblib`, `../../etc/passwd` and an absolute path outside `artefacts/`. The offline scorer refuses `../` too. A control case inside `artefacts/` resolves. | 4 | **PASS** |
-| UT5 | Unit | FR10–12 | Rows correct | `test_thousand_fake_predictions`: 1,000 rows, no FK violations, every t4 ≥ t3, v_latency non-negative, alerts exactly for malicious non-warm-up rows, High iff confidence ≥ 0.90. `test_t4_written_in_next_transaction` and `test_foreign_keys_enforced` (IntegrityError on unknown flow, run or env) also pass. | 10 | **PASS** on the criterion. 1 supporting test fails (`test_no_sql_built_from_strings`, §4.1) |
+| UT5 | Unit | FR10–12 | Rows correct | `test_thousand_fake_predictions`: 1,000 rows, no FK violations, every t4 ≥ t3, v_latency non-negative, alerts exactly for malicious non-warm-up rows, High iff confidence ≥ 0.90. `test_t4_written_in_next_transaction` and `test_foreign_keys_enforced` (IntegrityError on unknown flow, run or env) also pass. | 10 | **PASS** |
 | IT1 | Integration | FR1–4, FR11 | Counts match; no negative intervals | `test_200_record_run_via_control` ×3 (IF, RF, LSTM): 200 sent = 200 processed = 200 PREDICTION rows, 0 malformed, 0 NULL t4, 0 negative intervals. Clock check (1,000 @ 100 ms, IF): every t_tx > 0, median 0.188 ms. | 11 | **PASS** |
 | IT2 | Integration | FR2, FR8 | State changes as expected | Start/Stop from the dashboard sidebar locks and unlocks the settings, with Δt still live. Model switch: dashboard model selector, and IF → RF on the same processes. Stop mid-run gives end_reason `stopped` with all t4 written. Rate change 20 → 5 ms changes the median gap from 20.00 to 5.00 ms and is recorded in MODEL_RUN.rate_changes. A rate change is refused in burst mode, and busy or invalid commands are refused. | 21 | **PASS** |
 | IT3 | Integration | §3.3.11 | 100% | Engine path, 500 rows × 5 model/task pairs: 0 label mismatches against the offline files. Streamed: **105/105** main-set runs at 100% agreement, 0 disagreeing records over 480,000 predictions (`results/latency_summary.csv`, `agreement`, `n_disagree`). | 2 (+5 shared with UT3) | **PASS** |
-| ST1 | System | NFR1, NFR2 | Results produced; NFR1/2 verdicts stated | Main set complete: S1 15, S2 15, S3 60, S4 15 included runs. `results/nfr_verdicts.csv`: **NFR1 PASS** for IF (p95 36.2 ± 9.3 ms), RF (67.4 ± 16.3 ms) and LSTM (18.5 ± 1.7 ms). **NFR2 FAIL** for IF (70.8 ± 11.9 records/s) and RF (24.8 ± 3.6 records/s). LSTM 99.9 records/s, but p95 > Δt (reported as a finding). The dashboard-closed S1 set has not been run yet, so `dashboard_open_vs_closed.csv` holds only a note. | 16 | **PASS** (results and verdicts stated). 1 supporting test fails (§4.2) |
+| ST1 | System | NFR1, NFR2 | Results produced; NFR1/2 verdicts stated | Main set complete: S1 15, S2 15, S3 60, S4 15 included runs. `results/nfr_verdicts.csv`: **NFR1 PASS** for IF (p95 36.2 ± 9.3 ms), RF (67.4 ± 16.3 ms) and LSTM (18.5 ± 1.7 ms). **NFR2 FAIL** for IF (70.8 ± 11.9 records/s) and RF (24.8 ± 3.6 records/s). LSTM 99.9 records/s, but p95 > Δt (reported as a finding). Dashboard-closed S1 set complete (runs 115–129); `dashboard_open_vs_closed.csv` filled in (chapter4_notes §3.13). Streamed agreement 120/120 runs. | 16 | **PASS** (results and verdicts stated) |
 | ST2 | System | NFR6 | Only 127.0.0.1 | `netstat -an` with the full system running: 9100, 9101, 9102 and 8501 all on 127.0.0.1 (§5). `test_service_ports_bind_loopback_only` agrees. | 2 | **PASS** |
 | ST3 | System | NFR4 | Identical labels | S1 run 6 (LSTM binary, seed 42) replayed offline twice in fresh processes: stream order identical, 0 of 5,000 labels differ, max score and confidence difference 0.0 (§6). | manual | **PASS** |
 | UAT | Acceptance | NFR5 | Done without help; Likert questionnaire | `docs/uat/instructions.md` / `.pdf` and `docs/uat/questionnaire.md` / `.pdf` | — | Pending |
@@ -124,11 +124,11 @@ main test. "(+IT)" means a unit-level ID that is also checked through the live s
 | 69 | `test_run_matrix.py::test_interleaved_order_and_one_seed_per_repetition` | ST1 (supp.) | NFR1, NFR2 | Models interleaved IF, RF, LSTM; one seed per repetition | PASSED |
 | 70 | `test_run_matrix.py::test_closed_set_is_s1_without_dashboard` | ST1 (supp.) | NFR1 | Closed set = S1 without dashboard | PASSED |
 | 71 | `test_run_matrix.py::test_burst_block_and_estimate` | ST1 (supp.) | NFR2 (S4) | Burst block and wall-time estimate | PASSED |
-| 72 | `test_run_matrix.py::test_buffer_check_refuses_small_buffers` | ST1 (supp.) | S4 validity | Matrix refuses to start with socket buffers < 4 MB | PASSED |
+| 72 | `test_run_matrix.py::test_buffer_check_refuses_small_buffers` | ST1 (supp.) | S4 validity | Matrix refuses to start with socket buffers < 4 MB | PASSED (fixed, §4.3) |
 | 73 | `test_run_matrix.py::test_set_and_flag_must_agree` | ST1 (supp.) | §3.3.7 | --set and --dashboard-open must agree | PASSED |
 | 74 | `test_run_matrix.py::test_prepare_accepts_dashboard_open` | ST1 (supp.) | §3.3.7 | Dashboard state passed with prepare | PASSED |
 | 75 | `test_run_matrix.py::test_dry_run_prints_both_sets` | ST1 (supp.) | - | Dry run lists both sets (120 runs) | PASSED |
-| 76 | `test_run_matrix.py::test_headless_run_records_dashboard_state_and_resumes` | ST1 (supp.) | NFR1, NFR2 | Headless closed-set run through real services records dashboard_open = false, and a resume skips it | **FAILED** |
+| 76 | `test_run_matrix.py::test_headless_run_records_dashboard_state_and_resumes` | ST1 (supp.) | NFR1, NFR2 | Headless closed-set run through real services records dashboard_open = false, and a resume skips it | PASSED (fixed, §4.2) |
 | 77 | `test_split_fit.py::test_done_report_class_counts_reasonable` | - (Phase 1) | control 1 | Split fractions and stratified class shares | PASSED |
 | 78 | `test_split_fit.py::test_done_partitions_disjoint_and_all_classes` | - (Phase 1) | control 1 | Partitions disjoint, all classes present, row_index order | PASSED |
 | 79 | `test_split_fit.py::test_done_preprocessor_matches_X_test` | UT1 | FR6 | Online Preprocessor.transform on 1,000 seeded test rows is allclose to offline X_test.npy; feature list identical | PASSED |
@@ -146,7 +146,7 @@ main test. "(+IT)" means a unit-level ID that is also checked through the live s
 | 91 | `test_storage.py::test_severity_rule` | UT5 | FR10 | Severity High iff confidence >= 0.90 (NaN/None -> Medium) | PASSED |
 | 92 | `test_storage.py::test_environment_row` | UT5 (supp.) | FR15 | TEST_ENVIRONMENT row collected and reused, not duplicated | PASSED |
 | 93 | `test_storage.py::test_protocol_names` | UT5 (supp.) | FR12 | Protocol code -> TCP/UDP/ICMP/Other | PASSED |
-| 94 | `test_storage.py::test_no_sql_built_from_strings` | UT5 (supp.) | NFR6 (parameterised SQL) | Static AST check over src/ and experiments/: no SQL built with f-string/+/%/.format; every execute*/read_sql argument a literal or module constant | **FAILED** |
+| 94 | `test_storage.py::test_no_sql_built_from_strings` | UT5 (supp.) | NFR6 (parameterised SQL) | Static AST check over src/ and experiments/: no SQL built with f-string/+/%/.format; every execute*/read_sql argument a literal or module constant | PASSED (fixed, §4.1) |
 | 95 | `test_storage.py::test_sql_checker_catches_bad_code` | UT5 (supp.) | NFR6 | The static check flags the three bad patterns (not vacuous) | PASSED |
 | 96 | `test_storage.py::test_init_db_real_partition` | UT5 (supp.) | FR12 | FLOW_RECORD loaded once from test_raw (flow_id = row_index, labels, protocols); second call reloads nothing | PASSED |
 | 97 | `test_system_metrics.py::test_backlog_counts_unfinished_earlier_records` | ST1 (supp.) | NFR2 | Backlog definition (plan §8.3) | PASSED |
@@ -195,7 +195,10 @@ only a literal or a **module-level** constant as the first argument to
 it. This is a **false positive**: NFR6 (parameterised queries) is still met. It was
 introduced with `system_metrics.py` in commit `50f7b98`. To fix it, move the query to a
 module-level constant, or let the checker accept a local name bound once to a string
-literal. The fix is not applied here (no code changes for this report).
+literal.
+
+**Fixed 2026-11-17:** the query is now the module-level constant `RECORDS_SQL` in
+`system_metrics.py`. The SQL text is unchanged and the checker was not loosened.
 
 ### 4.2 `test_run_matrix.py::test_headless_run_records_dashboard_state_and_resumes`
 
@@ -214,6 +217,25 @@ both runs. The driver itself did the right thing: run 17 completed with 20 predi
 and `dashboard_open = false`. Run on its own, the test **passes** (`1 passed in 11.77 s`).
 This is a test-isolation fault caused by two tests using the same scenario label. To
 fix it, give one of them a different label or filter on run_id.
+
+**Fixed 2026-11-17:** the dashboard test now uses its own label, `dash-test-S1`. The
+dashboard treats any scenario other than its own as script-started, so the test still
+checks the same behaviour.
+
+### 4.3 `test_run_matrix.py::test_buffer_check_refuses_small_buffers` (appeared 2026-11-17)
+
+```
+assert code == 2   ->  0 == 2
+```
+
+This test passed on 16 Nov and failed on the first re-run after the other two fixes. It
+called `run_matrix.main()` without `--db`, so it read the real `db/nids.db`. Once the
+closed set was complete there (runs 115–129), `main()` found nothing pending and
+returned 0 before it reached the socket-buffer preflight. The test had only been
+passing because closed runs were still outstanding. **Fixed:** the test passes a
+non-existent temporary `--db` and `--delay-csv`, so every run is pending and the
+preflight is always exercised. It no longer reads `db/nids.db`. No other test calls
+`main()` without `--db` past argument parsing.
 
 ## 5. ST2: loopback-only sockets (NFR6)
 
@@ -281,7 +303,7 @@ labels. **Verdict: PASS.**
 
 ```bash
 source .venv/bin/activate
-python -m pytest -v                                   # full suite (~9 min; includes slow tests)
+python -m pytest -v                                   # full suite (~8–9 min; includes slow tests)
 python -m pytest tests/test_run_matrix.py::test_headless_run_records_dashboard_state_and_resumes   # §4.2 in isolation
 python run.py --no-browser   # then, in another terminal:
 netstat -an | grep LISTEN    # ST2
